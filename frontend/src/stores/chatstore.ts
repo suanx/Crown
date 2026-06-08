@@ -644,13 +644,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
           rounds: 1,
         });
       } else {
-      } else {
         await agentClient.sendMessage({
           threadId,
           content: trimmed,
           attachments: attachments ?? [],
         });
-      }
       }
     } catch (err) {
       // sendMessage failure — 关掉 pending,把错误塞到一条本地 system msg

@@ -323,9 +323,7 @@ function ServerCard({
     </div>
   );
 }
-      return <Pill tone="warning">待授权</Pill>;
-  }
-}
+
 
 /** 添加服务器对话框 — 粘贴标准 MCP 配置 JSON。 */
 function AddServerDialog({
