@@ -1,0 +1,16 @@
+[package]
+name = "deepseek-tokenizer"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "DeepSeek V4 BPE tokenizer — encode-only port for token counting and context estimation"
+
+[dependencies]
+flate2 = "1"
+serde = { workspace = true }
+serde_json = { workspace = true }
+lru = { workspace = true }
+regex = { workspace = true }
+parking_lot = { workspace = true }
+
+[dev-dependencies]

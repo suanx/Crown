@@ -1,0 +1,114 @@
+/* ---------------------------------------------------------------------------
+ * Design Tokens — Crown
+ *
+ * 颜色: 暖灰 (Claude #1F1F1E) + DeepSeek 蓝 #4D6BFE 品牌点缀
+ * 布局: 5 区 CSS Grid + 三个可变 dock 槽位
+ * ------------------------------------------------------------------------- */
+
+:root {
+  /* —— 颜色 (亮色) —— */
+  --ds-bg-canvas: #FFFFFF;
+  --ds-bg-elevated: #F7F6F3;
+  --ds-bg-overlay: #FFFFFF;
+  --ds-bg-hover: rgba(0, 0, 0, 0.04);
+  --ds-bg-input: #F4F3EE;
+
+  --ds-text-primary: #1F1F1E;
+  --ds-text-secondary: #6E6D6A;
+  --ds-text-tertiary: #9C9B97;
+  --ds-text-disabled: #C5C4BF;
+  --ds-text-inverse: #FAFAF7;
+
+  --ds-border-subtle: rgba(0, 0, 0, 0.06);
+  --ds-border-default: rgba(0, 0, 0, 0.10);
+  --ds-border-strong: rgba(0, 0, 0, 0.16);
+  --ds-border-focus: #4D6BFE;
+
+  --ds-brand: #4D6BFE;
+  --ds-brand-hover: #3B5AE8;
+  --ds-brand-active: #2A49D6;
+  --ds-brand-soft: rgba(77, 107, 254, 0.10);
+  --ds-brand-on: #FFFFFF;
+
+  --ds-success: #1F9E5F;
+  --ds-success-soft: rgba(31, 158, 95, 0.12);
+  --ds-warning: #C77B1A;
+  --ds-warning-soft: rgba(199, 123, 26, 0.12);
+  --ds-danger: #D14B4B;
+  --ds-danger-soft: rgba(209, 75, 75, 0.10);
+
+  --ds-reasoning-bg: #F4F1EA;
+  --ds-code-bg: #1F1F1E;
+  --ds-code-text: #E8E6E0;
+  --ds-tool-bg: #F7F6F3;
+
+  --ds-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --ds-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --ds-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.12);
+
+  --ds-scrollbar-thumb: rgba(0, 0, 0, 0.18);
+  --ds-scrollbar-thumb-hover: rgba(0, 0, 0, 0.30);
+
+  /* —— 布局 dock 尺寸 (运行时由 workspaceStore 写入) —— */
+  /* 边界:
+     sidebar 220–420 (默认 280)
+     right   280–720 (默认 380)
+     bottom  120–70vh (默认 260) */
+  --ds-sidebar-w: 280px;
+  --ds-right-w: 0px;
+  --ds-bottom-h: 0px;
+
+  /* —— 布局边界常量 (供 JS 引用,不要改) —— */
+  --ds-sidebar-min: 220px;
+  --ds-sidebar-max: 420px;
+  --ds-right-min: 280px;
+  --ds-right-max: 720px;
+  --ds-bottom-min: 120px;
+
+  /* —— 拖拽手柄 —— */
+  --ds-handle-w: 4px;
+}
+
+.dark {
+  --ds-bg-canvas: #1F1F1E;
+  --ds-bg-elevated: #262626;
+  --ds-bg-overlay: #2D2D2A;
+  --ds-bg-hover: rgba(255, 255, 255, 0.05);
+  --ds-bg-input: #2A2A28;
+
+  --ds-text-primary: #ECEAE3;
+  --ds-text-secondary: #A8A6A0;
+  --ds-text-tertiary: #75736E;
+  --ds-text-disabled: #4A4946;
+  --ds-text-inverse: #1F1F1E;
+
+  --ds-border-subtle: rgba(255, 255, 255, 0.06);
+  --ds-border-default: rgba(255, 255, 255, 0.10);
+  --ds-border-strong: rgba(255, 255, 255, 0.16);
+  --ds-border-focus: #6B8AFF;
+
+  --ds-brand: #6B8AFF;
+  --ds-brand-hover: #5A7AEE;
+  --ds-brand-active: #4A6ADD;
+  --ds-brand-soft: rgba(107, 138, 255, 0.14);
+  --ds-brand-on: #FFFFFF;
+
+  --ds-success: #4ADE80;
+  --ds-success-soft: rgba(74, 222, 128, 0.14);
+  --ds-warning: #F4B860;
+  --ds-warning-soft: rgba(244, 184, 96, 0.14);
+  --ds-danger: #F87171;
+  --ds-danger-soft: rgba(248, 113, 113, 0.12);
+
+  --ds-reasoning-bg: #232220;
+  --ds-code-bg: #16161A;
+  --ds-code-text: #ECEAE3;
+  --ds-tool-bg: #232220;
+
+  --ds-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30);
+  --ds-shadow-md: 0 4px 14px rgba(0, 0, 0, 0.45);
+  --ds-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
+
+  --ds-scrollbar-thumb: rgba(255, 255, 255, 0.10);
+  --ds-scrollbar-thumb-hover: rgba(255, 255, 255, 0.20);
+}

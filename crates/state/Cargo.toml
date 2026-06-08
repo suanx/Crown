@@ -1,0 +1,26 @@
+[package]
+name = "deepseek-state"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+deepseek-client = { path = "../client" }
+parking_lot = "0.12"
+rusqlite = { version = "0.32", features = ["bundled"] }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+ulid = { version = "1", features = ["serde"] }
+dirs = "5"
+chrono = { version = "0.4", features = ["serde"] }
+
+[dev-dependencies]
+tempfile = "3"
+criterion = { version = "0.5", default-features = false }
+
+[[bench]]
+name = "state_perf"
+harness = false

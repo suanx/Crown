@@ -1,0 +1,41 @@
+[package]
+name = "crown"
+version.workspace = true
+edition.workspace = true
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+anyhow.workspace = true
+async-trait.workspace = true
+chrono.workspace = true
+dashmap.workspace = true
+deepseek-client = { path = "../client" }
+deepseek-core = { path = "../core" }
+deepseek-mcp = { path = "../mcp" }
+deepseek-skill = { path = "../skill" }
+deepseek-state = { path = "../state" }
+deepseek-tools = { path = "../tools" }
+dirs.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+rfd = "0.15"
+portable-pty = "0.8"
+reqwest.workspace = true
+tauri = { version = "2", features = ["devtools"] }
+tokio.workspace = true
+tokio-util.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+ulid.workspace = true
+
+[features]
+custom-protocol = ["tauri/custom-protocol"]
+
+# PERF-1: WebView2 runtime memory control (MemoryUsageTargetLevel) needs the
+# COM bindings. Versions pinned to match what tauri 2 pulls in transitively
+# (webview2-com 0.38 → windows 0.61) so the COM types are interoperable.
+[target.'cfg(windows)'.dependencies]
+webview2-com = "0.38"
+windows = { version = "0.61", features = ["Win32_Foundation"] }

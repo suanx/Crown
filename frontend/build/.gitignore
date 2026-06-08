@@ -1,0 +1,3 @@
+# 打包产物 — 不进 git
+installers/
+portable/

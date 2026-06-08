@@ -1,0 +1,30 @@
+[package]
+name = "deepseek-mcp"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+async-trait.workspace = true
+deepseek-client = { path = "../client" }
+deepseek-tools = { path = "../tools" }
+dirs.workspace = true
+parking_lot.workspace = true
+rmcp.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+tracing.workspace = true
+regex.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+deepseek-core = { path = "../core" }
+deepseek-client = { path = "../client" }
+deepseek-state = { path = "../state" }
+async-trait.workspace = true
+tokio-util.workspace = true
+serde_json.workspace = true

@@ -1,0 +1,30 @@
+[package]
+name = "deepseek-core"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+arc-swap.workspace = true
+async-trait.workspace = true
+chrono.workspace = true
+deepseek-client = { path = "../client" }
+deepseek-state = { path = "../state" }
+deepseek-skill = { path = "../skill" }
+deepseek-tokenizer = { path = "../tokenizer" }
+deepseek-tools = { path = "../tools" }
+dirs.workspace = true
+futures.workspace = true
+lru.workspace = true
+parking_lot.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+toml.workspace = true
+tracing.workspace = true
+ulid.workspace = true
+
+[dev-dependencies]
+tempfile = "3"
