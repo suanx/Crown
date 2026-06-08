@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/shared/icons/Icon";
 import {
   AttachIcon,
+  CloseIcon,
   SendIcon,
   StopIcon,
   CodeIcon,

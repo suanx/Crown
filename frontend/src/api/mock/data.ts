@@ -527,6 +527,7 @@ export const MOCK_CONFIG: AppConfig = {
   apiKeyPresent: true,
   baseUrl: "https://api.deepseek.com",
   defaultProviderId: "opencode",
+  defaultModel: "deepseek-v4-flash",
   providers: [
     {
       id: "opencode",

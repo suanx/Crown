@@ -129,7 +129,7 @@ interface ChatState {
   /** 强制重拉(updateThread / switchModel 等改动后用). */
   reloadThread: (id: string) => Promise<void>;
   /** 发消息:本地插入 user message + 调后端,turn 推进靠事件. */
-  sendMessage: (threadId: string, content: string) => Promise<void>;
+  sendMessage: (threadId: string, content: string, attachments?: string[]) => Promise<void>;
   /** 中止当前 turn(也用于 ApprovalDialog Esc / ToolCallCard Esc). */
   abortTurn: (threadId: string) => Promise<void>;
   /** 回溯到某条用户消息:截断对话 + 还原文件 (P2). */
@@ -610,6 +610,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         threadsById: {
           ...s.threadsById,
           [threadId]: {
+            ...thread,
             messages: [...thread.messages, localUserMessage(threadId, trimmed, attachments)],
           },
         },

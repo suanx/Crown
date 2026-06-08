@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { agentClient, type McpServer, type McpServerStatus, type McpToolInfo } from "@/api";
+import { agentClient, type McpServer, type McpToolInfo } from "@/api";
 import { Toggle } from "@/shared/ui/Toggle";
 import { Button } from "@/shared/ui/Button";
 import { Pill } from "@/shared/ui/Pill";
@@ -8,8 +8,6 @@ import { Icon } from "@/shared/icons/Icon";
 import {
   PlusIcon,
   RefreshIcon,
-  CheckCircleIcon,
-  WarningCircleIcon,
   McpIcon,
   TrashIcon,
   CloseIcon,
@@ -215,7 +213,17 @@ function ServerCard({
               <span className="text-sm font-semibold text-text-primary">
                 {server.name}
               </span>
-              <StatusBadge status={server.status} />
+              {(() => {
+                const map: Record<string, { tone: "success" | "danger" | "neutral" | "warning" | "info"; label: string }> = {
+                  connected: { tone: "success", label: "已连接" },
+                  failed: { tone: "danger", label: "连接失败" },
+                  disabled: { tone: "neutral", label: "已禁用" },
+                  pending: { tone: "warning", label: "连接中" },
+                  needs_auth: { tone: "info", label: "需要认证" },
+                };
+                const s = map[server.status] ?? { tone: "neutral", label: server.status };
+                return <Pill tone={s.tone}>{s.label}</Pill>;
+              })()}
               {server.toolCount > 0 && (
                 <button
                   onClick={() => setExpanded(!expanded)}

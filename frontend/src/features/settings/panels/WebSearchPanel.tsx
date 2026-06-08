@@ -17,7 +17,7 @@ function cloneProviders(items: WebSearchProviderConfig[]) {
 }
 
 function providerStatus(provider: WebSearchProviderConfig) {
-  if (!provider.implemented) return { label: "未接入", tone: "default" as const };
+  if (!provider.implemented) return { label: "未接入", tone: "neutral" as const };
   if (provider.keyRequired && !provider.apiKeyPresent && !provider.apiKey) {
     return { label: "需要 API key", tone: "neutral" as const };
   }
