@@ -684,6 +684,15 @@ export interface UsageStats {
   /** P3a 永远 null. */
   budgetUsedPct: number | null;
 }
+export interface UsageChartPoint {
+  dayEpochMs: number;
+  cacheReadTokens: number;
+  cacheMissTokens: number;
+  outputTokens: number;
+  totalCostUsd: number;
+}
+
+
 
 // ┌─────────────────────────────────────────────────────────────────────────┐
 // │ User Balance (P3a task 7)                                               │

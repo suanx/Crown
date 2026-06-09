@@ -402,6 +402,8 @@ fn main() {
             // stats
             commands::get_usage_stats,
             commands::export_diagnostics,
+            commands::get_usage_chart,
+
             // balance
             commands::get_user_balance,
             // filesystem

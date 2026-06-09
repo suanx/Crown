@@ -490,6 +490,20 @@ pub struct UsageStatsDto {
     pub budget_used_pct: Option<f64>,
 }
 
+
+/// One point in the daily usage chart — cost + token breakdown per day.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UsageChartPoint {
+    /// Start-of-day epoch ms (UTC) — for frontend date display.
+    pub day_epoch_ms: i64,
+    pub cache_read_tokens: u64,
+    pub cache_miss_tokens: u64,
+    pub output_tokens: u64,
+    pub total_cost_usd: f64,
+}
+
+
 // ─── Input DTOs (frontend → backend) ─────────────────────────────────────
 
 #[derive(Debug, Clone, Deserialize)]

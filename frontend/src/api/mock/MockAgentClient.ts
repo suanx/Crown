@@ -63,6 +63,7 @@ import type {
   UpdateProjectInput,
   UpdateThreadInput,
   UsageStats,
+  UsageChartPoint,
   UserBalance,
   // event types
   ContentDeltaEvent,
@@ -508,6 +509,11 @@ export class MockAgentClient implements AgentClient {
   ): Promise<UserBalance | null> {
     await delay();
     return clone(MOCK_USER_BALANCE);
+  }
+
+  async getUsageChart(): Promise<UsageChartPoint[]> {
+    await delay();
+    return [];
   }
 
   async fsGetWorkspaceRoot(): Promise<string> {

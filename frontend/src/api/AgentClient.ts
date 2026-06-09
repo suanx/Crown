@@ -22,6 +22,7 @@ import type {
   OutputStyle,
   RewindPoint,
   UsageStats,
+  UsageChartPoint,
   AppConfig,
   PermissionRule,
   ToolPermissionContextDto,
@@ -181,6 +182,8 @@ export interface AgentClient {
   listRewindPoints(threadId: string): Promise<RewindPoint[]>;
 
   // ── Stats ───────────────────────────────────────────────────────────────
+  getUsageChart(): Promise<UsageChartPoint[]>;
+
   getUsageStats(input?: GetUsageStatsInput): Promise<UsageStats>;
 
   /**
@@ -304,6 +307,7 @@ export const COMMAND_KEYS = [
   "setActiveOutputStyle",
   "deleteOutputStyle",
   "rewindThread",
+  "getUsageChart",
   "listRewindPoints",
   "getUsageStats",
   "getUserBalance",

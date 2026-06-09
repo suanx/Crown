@@ -62,6 +62,7 @@ import type {
   UpdateProjectInput,
   UpdateThreadInput,
   UsageStats,
+  UsageChartPoint,
   UserBalance,
   ContentDeltaEvent,
   ReasoningDeltaEvent,
@@ -511,6 +512,11 @@ export class HybridClient implements AgentClient {
       "getUserBalance",
       () => this.tauri.getUserBalance(input),
       () => this.mock.getUserBalance(input),
+    );
+
+  getUsageChart = (): Promise<UsageChartPoint[]> =>
+    this.invokeCmd("getUsageChart", () => this.tauri.getUsageChart(), () =>
+      this.mock.getUsageChart(),
     );
 
   fsGetWorkspaceRoot = (): Promise<string> =>

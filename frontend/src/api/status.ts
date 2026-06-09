@@ -58,6 +58,7 @@ export const CONTRACT_STATUS: Record<EndpointKey, ContractStatus> = {
   deleteThread: "connected",
   searchThreads: "connected",
   exportThread: "connected",
+  getUsageChart: "connected",
   // Projects — 后端 projects 表 + thread.project_id 真实持久化。
   listProjects: "connected",
   pickProjectDirectory: "connected",

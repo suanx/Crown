@@ -9,7 +9,7 @@
 use deepseek_core::pricing::{self, ProviderId};
 use deepseek_state::UsageRepo;
 
-use crate::dto::{GetUsageStatsInput, UsageStatsDto, UsageStatsWindow};
+use crate::dto::{GetUsageStatsInput, UsageChartPoint, UsageStatsDto, UsageStatsWindow};
 use crate::AppState;
 
 /// Aggregate token + cost totals across the requested window.
@@ -72,6 +72,29 @@ pub async fn get_usage_stats(
         budget_limit_usd: None,
         budget_used_pct: None,
     })
+}
+
+
+/// Return daily-aggregated usage for the last 30 days (chart data).
+/// Each point is one calendar day (UTC). Empty array when no usage exists.
+#[tauri::command]
+pub async fn get_usage_chart(
+    state: tauri::State<'_, AppState>,
+) -> Result<Vec<UsageChartPoint>, String> {
+    // Last 30 days from now
+    let since_ms = chrono::Utc::now().timestamp_millis() - 30 * 86400_000;
+    let urepo = UsageRepo::new(state.db.as_ref());
+    let rows = urepo.daily_breakdown_since(since_ms).map_err(|e| e.to_string())?;
+    Ok(rows
+        .into_iter()
+        .map(|r| UsageChartPoint {
+            day_epoch_ms: r.day_epoch_ms,
+            cache_read_tokens: r.cache_read_tokens,
+            cache_miss_tokens: r.cache_miss_tokens,
+            output_tokens: r.output_tokens,
+            total_cost_usd: r.total_cost_usd,
+        })
+        .collect())
 }
 
 /// Export a diagnostics snapshot as a pretty-printed JSON string for bug

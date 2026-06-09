@@ -173,7 +173,49 @@ impl<'a> UsageRepo<'a> {
             .collect::<rusqlite::Result<Vec<_>>>()?;
         Ok(rows)
     }
+
+    /// Daily-aggregated token + cost breakdown for a time window.
+    /// Returns one row per calendar day (UTC), ordered ascending.
+    /// Useful for chart rendering in the billing UI.
+    pub fn daily_breakdown_since(&self, since_ms: i64) -> Result<Vec<DailyUsageRow>, DbError> {
+        let conn = self.db.conn();
+        let mut stmt = conn.prepare(
+            "SELECT created_at / 86400000 AS day,
+                    COALESCE(SUM(cache_read_tokens), 0),
+                    COALESCE(SUM(cache_miss_tokens), 0),
+                    COALESCE(SUM(output_tokens), 0),
+                    COALESCE(SUM(cost_usd), 0.0)
+             FROM usage
+             WHERE created_at >= ?1
+             GROUP BY day
+             ORDER BY day ASC",
+        )?;
+        let rows = stmt
+            .query_map(params![since_ms], |r| {
+                Ok(DailyUsageRow {
+                    day_epoch_ms: r.get::<_, i64>(0)? * 86400000,
+                    cache_read_tokens: r.get::<_, i64>(1)? as u64,
+                    cache_miss_tokens: r.get::<_, i64>(2)? as u64,
+                    output_tokens: r.get::<_, i64>(3)? as u64,
+                    total_cost_usd: r.get(4)?,
+                })
+            })?
+            .collect::<rusqlite::Result<Vec<_>>>()?;
+        Ok(rows)
+    }
 }
+
+/// A single day aggregation for chart rendering.
+#[derive(Debug, Clone, PartialEq)]
+pub struct DailyUsageRow {
+    /// Start-of-day epoch ms (UTC).
+    pub day_epoch_ms: i64,
+    pub cache_read_tokens: u64,
+    pub cache_miss_tokens: u64,
+    pub output_tokens: u64,
+    pub total_cost_usd: f64,
+}
+
 
 /// Per-(provider, model) cache-read token row used by
 /// [`UsageRepo::cache_read_breakdown_since`].

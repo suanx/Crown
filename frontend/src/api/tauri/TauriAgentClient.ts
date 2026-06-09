@@ -75,6 +75,7 @@ import type {
   UpdateProjectInput,
   UpdateThreadInput,
   UsageStats,
+  UsageChartPoint,
   UserBalance,
   ContentDeltaEvent,
   ReasoningDeltaEvent,
@@ -337,6 +338,10 @@ export class TauriAgentClient implements AgentClient {
   // ── Stats ───────────────────────────────────────────────────────────────
   getUsageStats(input?: GetUsageStatsInput): Promise<UsageStats> {
     return invoke<UsageStats>("get_usage_stats", input ? { input } : {});
+  }
+
+  getUsageChart(): Promise<UsageChartPoint[]> {
+    return invoke<UsageChartPoint[]>("get_usage_chart");
   }
 
   /**
