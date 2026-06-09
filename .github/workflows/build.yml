@@ -25,6 +25,8 @@ jobs:
     defaults:
       run:
         shell: bash
+    permissions:
+      contents: write
 
     env:
       CARGO_INCREMENTAL: 0
@@ -90,3 +92,5 @@ jobs:
             target/release/bundle/nsis/*.exe
             target/release/*.exe
           generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
