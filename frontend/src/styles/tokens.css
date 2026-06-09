@@ -11,15 +11,15 @@
   --ds-bg-elevated: #F7F6F3;
   --ds-bg-overlay: #FFFFFF;
   --ds-bg-hover: rgba(0, 0, 0, 0.04);
-  --ds-bg-input: #F4F3EE;
+  --ds-bg-input: #F0EFE9;
 
   --ds-text-primary: #1F1F1E;
   --ds-text-secondary: #6E6D6A;
-  --ds-text-tertiary: #9C9B97;
+  --ds-text-tertiary: #7A7A77;
   --ds-text-disabled: #C5C4BF;
   --ds-text-inverse: #FAFAF7;
 
-  --ds-border-subtle: rgba(0, 0, 0, 0.06);
+  --ds-border-subtle: rgba(0, 0, 0, 0.10);
   --ds-border-default: rgba(0, 0, 0, 0.10);
   --ds-border-strong: rgba(0, 0, 0, 0.16);
   --ds-border-focus: #4D6BFE;

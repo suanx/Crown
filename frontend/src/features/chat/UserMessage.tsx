@@ -41,15 +41,27 @@ export function UserMessage({ message }: UserMessageProps) {
       >
         {message.attachments && message.attachments.length > 0 && (
           <div className="mb-2 flex flex-wrap gap-1.5">
-            {message.attachments.map((name, i) => (
-              <span
-                key={i}
-                className="inline-flex items-center gap-1 rounded-md bg-white/15 px-2 py-0.5 text-[11px] text-white/90"
-              >
-                <Icon icon={AttachIcon} size={10} />
-                <span className="truncate max-w-[140px]">{name}</span>
-              </span>
-            ))}
+            {message.attachments.map((att, i) => {
+              if (att.startsWith("data:image/")) {
+                return (
+                  <img
+                    key={i}
+                    src={att}
+                    alt={`attached image ${i + 1}`}
+                    className="max-w-[240px] max-h-[180px] rounded-lg object-cover border border-white/20"
+                  />
+                );
+              }
+              return (
+                <span
+                  key={i}
+                  className="inline-flex items-center gap-1 rounded-md bg-white/15 px-2 py-0.5 text-[11px] text-white/90"
+                >
+                  <Icon icon={AttachIcon} size={10} />
+                  <span className="truncate max-w-[140px]">{att}</span>
+                </span>
+              );
+            })}
           </div>
         )}
         {stripReminderPrefix(message.content)}

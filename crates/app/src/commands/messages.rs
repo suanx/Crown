@@ -1,5 +1,7 @@
 //! send_message + abort_turn commands.
 
+use base64::Engine;
+
 use tokio::sync::mpsc;
 
 use deepseek_core::engine::EngineEvent;
@@ -55,33 +57,63 @@ pub async fn send_message(
         }
     });
 
-    // If attachments are provided, read file contents and prepend them
-    // to the user message so the agent receives the file context.
+    // Process attachments: data URIs (images from frontend), image files (read as base64),
+    // and text files (read as text and prepend).
     let enriched_content = if input.attachments.is_empty() {
         input.content
     } else {
         let mut parts: Vec<String> = Vec::new();
         for file_path in &input.attachments {
-            // Try to read the file relative to the workspace or as absolute path
+            if file_path.starts_with("data:image/") {
+                // Already a data URI from the frontend (pasted/screenshot).
+                parts.push(format!("![attached image]({file_path})"));
+                continue;
+            }
             let path = std::path::Path::new(file_path);
-            match std::fs::read_to_string(path) {
-                Ok(text) => {
-                    let filename = path.file_name()
-                        .map(|n| n.to_string_lossy())
-                        .unwrap_or_default();
-                    let truncated = if text.len() > 50_000 {
-                        format!("{}...(truncated, {} chars)", &text[..50_000], text.len())
-                    } else {
-                        text
-                    };
-                    parts.push(format!(
-                        "--- Begin attached file: {filename} ---\n{truncated}\n--- End attached file: {filename} ---"
-                    ));
+            // Check if it's an image file by extension
+            let is_image = path.extension()
+                .and_then(|e| e.to_str())
+                .map(|e| matches!(e.to_lowercase().as_str(), "png" | "jpg" | "jpeg" | "gif" | "webp" | "bmp"))
+                .unwrap_or(false);
+            if is_image {
+                match std::fs::read(path) {
+                    Ok(bytes) => {
+                        use base64::engine::general_purpose::STANDARD as B64;
+                        let b64 = B64.encode(&bytes);
+                        let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("png").to_lowercase();
+                        let mime = match ext.as_str() {
+                            "jpg" | "jpeg" => "image/jpeg",
+                            "gif" => "image/gif",
+                            "webp" => "image/webp",
+                            "bmp" => "image/bmp",
+                            _ => "image/png",
+                        };
+                        parts.push(format!("![attached image](data:{mime};base64,{b64})"));
+                    }
+                    Err(e) => {
+                        parts.push(format!("--- Attached file: {file_path} (error reading: {e}) ---"));
+                    }
                 }
-                Err(e) => {
-                    parts.push(format!(
-                        "--- Attached file: {file_path} (error reading: {e}) ---"
-                    ));
+            } else {
+                match std::fs::read_to_string(path) {
+                    Ok(text) => {
+                        let filename = path.file_name()
+                            .map(|n| n.to_string_lossy())
+                            .unwrap_or_default();
+                        let truncated = if text.len() > 50_000 {
+                            format!("{}...(truncated, {} chars)", &text[..50_000], text.len())
+                        } else {
+                            text
+                        };
+                        parts.push(format!(
+                            "--- Begin attached file: {filename} ---\n{truncated}\n--- End attached file: {filename} ---"
+                        ));
+                    }
+                    Err(e) => {
+                        parts.push(format!(
+                            "--- Attached file: {file_path} (error reading: {e}) ---"
+                        ));
+                    }
                 }
             }
         }

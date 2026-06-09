@@ -874,7 +874,7 @@ fn provider_headers(provider: &ProviderConfigDto) -> HeaderMap {
     headers
 }
 
-fn parse_model_list(provider_type: &str, value: serde_json::Value) -> Vec<ProviderModelDto> {
+fn parse_model_list(value: serde_json::Value) -> Vec<ProviderModelDto> {
     let arr = value.get("data").and_then(|v| v.as_array());
     arr.into_iter()
         .flatten()
@@ -916,7 +916,7 @@ pub async fn fetch_provider_models(
         ));
     }
     let value: serde_json::Value = serde_json::from_str(&text).map_err(|e| e.to_string())?;
-    Ok(parse_model_list(&input.provider.provider_type, value))
+    Ok(parse_model_list(value))
 }
 
 #[tauri::command]

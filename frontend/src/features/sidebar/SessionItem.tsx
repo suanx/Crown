@@ -9,6 +9,7 @@ import {
   StarIcon,
   TrashIcon,
   MoreVerticalIcon,
+  DownloadIcon,
 } from "@/shared/icons/set";
 import { Icon } from "@/shared/icons/Icon";
 import { Spinner } from "@/shared/ui/Spinner";
@@ -111,6 +112,18 @@ export function SessionItem({
                 void agentClient.updateThread({ threadId: thread.id, title }).then(() => useSessionStore.getState().loadThreads());
               }
             }} />
+            <MenuItem icon={DownloadIcon} label="导出" onClick={async () => {
+              onCloseMenu();
+              const md = await agentClient.exportThread(thread.id);
+              const blob = new Blob([md], { type: "text/markdown" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `thread-${thread.id.slice(0, 8)}.md`;
+              a.click();
+              URL.revokeObjectURL(url);
+            }} />
+
             <div className="my-1 h-px bg-border-subtle" />
             <MenuItem
               icon={TrashIcon}

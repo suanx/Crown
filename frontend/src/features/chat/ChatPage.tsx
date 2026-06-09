@@ -8,8 +8,9 @@ import {
 } from "@/stores/chatStore";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 import type { Thread } from "@/api";
+import { agentClient } from "@/api";
 import { Icon } from "@/shared/icons/Icon";
-import { SidebarIcon, TerminalIcon } from "@/shared/icons/set";
+import { SidebarIcon, TerminalIcon, DownloadIcon } from "@/shared/icons/set";
 import { MessageList } from "./MessageList";
 import { ComposeBar } from "./ComposeBar";
 import { BrainstormDiscussion } from "./BrainstormDiscussion";
@@ -68,6 +69,19 @@ export function ChatPage({ threadId }: ChatPageProps) {
     [thread, activeBrainstormRunId],
   );
 
+  async function handleExport() {
+    if (!thread?.id) return;
+    const md = await agentClient.exportThread(thread.id);
+    const blob = new Blob([md], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `thread-${thread.id.slice(0, 8)}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+
   return (
     <div className="h-full flex flex-col relative">
       {/* 对话顶部栏 — 显示标题 + 右侧面板按钮 */}
@@ -76,6 +90,13 @@ export function ChatPage({ threadId }: ChatPageProps) {
           {thread ? displayThreadTitle(thread.title, firstUserPreview(thread)) : ""}
         </span>
         <div className="flex items-center gap-1 shrink-0 no-drag">
+          <button
+            onClick={handleExport}
+            title="导出对话为 Markdown"
+            className="h-7 w-7 flex items-center justify-center rounded-md text-text-tertiary hover:bg-hover hover:text-text-primary transition-colors"
+          >
+            <Icon icon={DownloadIcon} size={14} />
+          </button>
           <button
             onClick={toggleRightPanel}
             title="切换右侧面板 (Ctrl+Alt+B)"

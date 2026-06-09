@@ -72,19 +72,61 @@ export function ComposeBar({
     ta.style.height = Math.min(8 * 24, ta.scrollHeight) + "px";
   }, [text]);
 
+  // Handle image paste
+  useEffect(() => {
+    const ta = ref.current;
+    if (!ta) return;
+    const handlePaste = async (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      const imageFiles: File[] = [];
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith("image/")) {
+          const file = item.getAsFile();
+          if (file) imageFiles.push(file);
+        }
+      }
+      if (imageFiles.length > 0) {
+        e.preventDefault();
+        setFiles((prev) => [...prev, ...imageFiles]);
+      }
+    };
+    ta.addEventListener("paste", handlePaste);
+    return () => ta.removeEventListener("paste", handlePaste);
+  }, []);
+
   const canSend = (text.trim().length > 0 || files.length > 0) && !streaming;
 
-  function handleSend() {
+  async function handleSend() {
     if (!canSend) return;
     const raw = text.trim();
     const transformed = applySlashCommand(raw);
-    // Pass file names as attachment identifiers; the agent resolves
-    // actual content via workspace context / read_file tool.
-    const filePaths = files.map((f) => f.name);
-    onSend?.(transformed ?? raw, filePaths.length > 0 ? filePaths : undefined);
+    // Convert image files to data URIs, pass file names for text files
+    const attachments: string[] = [];
+    for (const f of files) {
+      if (f.type.startsWith("image/")) {
+        const b64 = await fileToBase64(f);
+        attachments.push(`data:${f.type};base64,${b64}`);
+      } else {
+        attachments.push(f.name);
+      }
+    }
+    onSend?.(transformed ?? raw, attachments.length > 0 ? attachments : undefined);
     setText("");
     setFiles([]);
     setMenuIndex(0);
+  }
+
+  function fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        resolve(result.split(",")[1]);
+      };
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
   }
 
   function handleAttachClick() {
@@ -165,9 +207,17 @@ export function ComposeBar({
           {files.map((file, index) => (
             <div
               key={index}
-              className="flex items-center gap-1 rounded-md bg-elevated border border-border-subtle px-2 py-1 text-xs text-text-secondary max-w-[200px]"
+              className="flex items-center gap-1 rounded-md bg-elevated border border-border-subtle px-2 py-1 text-xs text-text-secondary max-w-[240px]"
             >
-              <Icon icon={AttachIcon} size={10} className="shrink-0" />
+              {file.type.startsWith("image/") ? (
+                <img
+                  src={URL.createObjectURL(file)}
+                  alt={file.name}
+                  className="w-6 h-6 rounded object-cover shrink-0"
+                />
+              ) : (
+                <Icon icon={AttachIcon} size={10} className="shrink-0" />
+              )}
               <span className="truncate">{file.name}</span>
               <button
                 onClick={() => removeFile(index)}
