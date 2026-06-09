@@ -83,6 +83,16 @@ export interface TodoItem {
 
 export type ThemeMode = "light" | "dark" | "system";
 
+/** 配色方案 — 品牌色主题 */
+export type ColorScheme =
+  | "default"
+  | "ocean"
+  | "orchid"
+  | "flame"
+  | "rose"
+  | "forest"
+  | "midnight";
+
 export type ThinkingEffort = "low" | "medium" | "high" | "ultra";
 
 /**

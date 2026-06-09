@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { PermissionMode, ThemeMode, ThinkingEffort } from "@/api";
+import type { ColorScheme, PermissionMode, ThemeMode, ThinkingEffort } from "@/api";
 
 /**
  * UI 状态 — 仅会话内的 ephemeral 状态.
@@ -10,6 +10,9 @@ interface UiState {
   theme: ThemeMode;
   setTheme: (m: ThemeMode) => void;
 
+  colorScheme: ColorScheme;
+  setColorScheme: (s: ColorScheme) => void;
+
   currentModel: string;
   setCurrentModel: (m: string) => void;
   currentProviderId: string;
@@ -19,27 +22,12 @@ interface UiState {
   permissionMode: PermissionMode;
   setPermissionMode: (m: PermissionMode) => void;
 
-  /**
-   * 流式回复时 MessageList 自动滚到底.
-   * 阶段三 #8 GeneralPanel "自动滚动" toggle 接通后由 setConfig 双向同步;
-   * 当前先内置默认 true,UI 通过 useUiStore 读取.
-   */
   autoScroll: boolean;
   setAutoScroll: (v: boolean) => void;
 
-  /**
-   * 主页 (sidebar 底部账户行) 显示余额.
-   * 默认 true.关闭后 sidebar 用户卡显示 v0.1.0 副标题,余额仍可在
-   * Settings → 用量与计费 页查看.
-   */
   showBalanceInSidebar: boolean;
   setShowBalanceInSidebar: (v: boolean) => void;
 
-  /**
-   * 单条消息底部显示成本徽章.
-   * 默认 false.关闭后 MessageMeta 仅显 token 数 + 缓存命中率.
-   * 开启时单条 cost 用 CNY 显示 (后端 USD * 静态汇率).
-   */
   showMessageCost: boolean;
   setShowMessageCost: (v: boolean) => void;
 
@@ -48,34 +36,27 @@ interface UiState {
   toggleDevtools: (v?: boolean) => void;
 }
 
-const UI_STORAGE_KEY = "ds.ui.v1";
+const UI_STORAGE_KEY = "ds.ui.v2";
 
 type PersistedUi = Pick<
   UiState,
-  "theme" | "showBalanceInSidebar" | "showMessageCost"
+  "theme" | "colorScheme" | "showBalanceInSidebar" | "showMessageCost"
 >;
 
 function loadPersistedUi(): PersistedUi {
   if (typeof window === "undefined") {
-    return {
-      theme: "dark",
-      showBalanceInSidebar: true,
-      showMessageCost: false,
-    };
+    return { theme: "dark", colorScheme: "default", showBalanceInSidebar: true, showMessageCost: false };
   }
   try {
     return {
       theme: "dark",
+      colorScheme: "default",
       showBalanceInSidebar: true,
       showMessageCost: false,
       ...JSON.parse(localStorage.getItem(UI_STORAGE_KEY) || "{}"),
     };
   } catch {
-    return {
-      theme: "dark",
-      showBalanceInSidebar: true,
-      showMessageCost: false,
-    };
+    return { theme: "dark", colorScheme: "default", showBalanceInSidebar: true, showMessageCost: false };
   }
 }
 
@@ -99,6 +80,13 @@ export const useUiStore = create<UiState>((set) => ({
     set({ theme });
     savePersistedUi({ theme });
     applyTheme(theme);
+  },
+
+  colorScheme: persistedUi.colorScheme,
+  setColorScheme: (colorScheme) => {
+    set({ colorScheme });
+    savePersistedUi({ colorScheme });
+    applyColorScheme(colorScheme);
   },
 
   currentModel: "deepseek-v4-flash",
@@ -143,4 +131,15 @@ function applyTheme(theme: ThemeMode) {
   root.classList.toggle("dark", isDark);
 }
 
+function applyColorScheme(scheme: ColorScheme) {
+  const root = document.documentElement;
+  // Remove all scheme classes then add current
+  const schemes: ColorScheme[] = ["default", "ocean", "orchid", "flame", "rose", "forest", "midnight"];
+  for (const s of schemes) {
+    root.classList.toggle(`scheme-${s}`, s === scheme);
+  }
+}
+
+// Apply persisted settings on init
 applyTheme(useUiStore.getState().theme);
+applyColorScheme(useUiStore.getState().colorScheme);
