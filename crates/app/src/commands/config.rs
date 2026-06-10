@@ -208,36 +208,7 @@ fn builtin_provider_templates() -> Vec<StoredProviderConfig> {
             base_url: "https://maas-api.cn-huabei-1.xf-yun.com/v2".into(),
             api_key: None,
             enabled: false,
-            models: vec![
-                ProviderModelDto {
-                    id: "xdeepseekv3".into(),
-                    label: "DeepSeek V3".into(),
-                    enabled: true,
-                    supports_tools: false,
-                    supports_reasoning: false,
-                },
-                ProviderModelDto {
-                    id: "xdeepseekr1".into(),
-                    label: "DeepSeek R1".into(),
-                    enabled: true,
-                    supports_tools: false,
-                    supports_reasoning: true,
-                },
-                ProviderModelDto {
-                    id: "xdeepseekv32".into(),
-                    label: "DeepSeek V3.2".into(),
-                    enabled: true,
-                    supports_tools: true,
-                    supports_reasoning: false,
-                },
-                ProviderModelDto {
-                    id: "xglm4.7".into(),
-                    label: "GLM-4.7".into(),
-                    enabled: true,
-                    supports_tools: true,
-                    supports_reasoning: false,
-                },
-            ],
+            models: Vec::new(),
         },
         // OpenAI 通用接口 — 用户可自定义 Base URL，兼容任意 OpenAI 协议服务
         StoredProviderConfig {

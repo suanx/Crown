@@ -550,12 +550,7 @@ export const MOCK_CONFIG: AppConfig = {
       apiKey: null,
       apiKeyPresent: false,
       enabled: false,
-      models: [
-        { id: "xdeepseekv3", label: "DeepSeek V3", enabled: true },
-        { id: "xdeepseekr1", label: "DeepSeek R1", enabled: true },
-        { id: "xdeepseekv32", label: "DeepSeek V3.2", enabled: true },
-        { id: "xglm4.7", label: "GLM-4.7", enabled: true },
-      ],
+      models: [],
     },
     {
       id: "openai-compatible",
