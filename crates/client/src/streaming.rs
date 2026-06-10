@@ -123,17 +123,19 @@ pub fn parse_sse_stream(
             if line.is_empty() {
                 continue;
             }
-            // Only process data lines
-            let Some(data) = line.strip_prefix("data: ") else {
+            // Only process data lines. Handle both "data: {...}" and "data:{...}"
+            // (some providers like xfyun omit the space after colon).
+            let raw_line = line.strip_prefix("data:").unwrap_or("").trim();
+            if raw_line.is_empty() {
                 continue;
-            };
-            match parse_sse_event(data) {
+            }
+            match parse_sse_event(raw_line) {
                 SseEvent::Chunk(chunk) => yield Ok(*chunk),
                 SseEvent::Done => break,
                 SseEvent::Malformed => {
                     // One unparseable frame must NOT end the stream. Log and
                     // keep reading — the model may still have more to say.
-                    warn!(payload = %truncate_for_log(data), "skipping malformed SSE frame");
+                    warn!(payload = %truncate_for_log(raw_line), "skipping malformed SSE frame");
                     continue;
                 }
             }
