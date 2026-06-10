@@ -937,10 +937,13 @@ pub async fn debug_test_provider(
         "max_tokens": 256,
     });
 
+    let body_str = serde_json::to_string(&body).map_err(|e| e.to_string())?;
+
     let resp = client
         .post(&endpoint)
         .header("Authorization", format!("Bearer {key}"))
         .header("Content-Type", "application/json")
+        .body(body_str.clone())
         .send()
         .await
         .map_err(|e| format!("HTTP request failed: {e}"))?;
@@ -948,7 +951,7 @@ pub async fn debug_test_provider(
     let status = resp.status();
     let text = resp.text().await.map_err(|e| e.to_string())?;
 
-    Ok(format!("HTTP {status}\n\n{text}"))
+    Ok(format!("URL: {endpoint}\n\nBody sent:\n{body_str}\n\nResponse HTTP {status}:\n{text}"))
 }
 
 #[cfg(test)]
