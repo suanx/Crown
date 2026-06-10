@@ -16,7 +16,7 @@ export function AboutPanel() {
             Crown
           </div>
           <div className="text-xs text-text-tertiary mt-0.5 font-mono">
-            v1.0.0 · 2026-06-04
+            v1.3.0
           </div>
 
         </div>

@@ -164,7 +164,7 @@ function BottomBar() {
                 "text-text-tertiary",
             )}
           >
-            {balanceLine ? balanceLine.text : "v0.1.0 · 原型"}
+            {balanceLine ? balanceLine.text : ""}
           </div>
         </div>
       </button>
