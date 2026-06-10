@@ -100,9 +100,6 @@ export type ThemeVariant =
   | "vibrant"
   | "sepia"
   | "oled";
-  | "rose"
-  | "forest"
-  | "midnight";
 
 export type ThinkingEffort = "low" | "medium" | "high" | "ultra";
 
