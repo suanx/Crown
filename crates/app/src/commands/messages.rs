@@ -57,20 +57,18 @@ pub async fn send_message(
         }
     });
 
-    // Process attachments: data URIs (images from frontend), image files (read as base64),
-    // and text files (read as text and prepend).
-    let enriched_content = if input.attachments.is_empty() {
-        input.content
-    } else {
-        let mut parts: Vec<String> = Vec::new();
-        for file_path in &input.attachments {
-            if file_path.starts_with("data:image/") {
-                // Already a data URI from the frontend (pasted/screenshot).
-                parts.push(format!("![attached image]({file_path})"));
-                continue;
-            }
-            let path = std::path::Path::new(file_path);
-            // Check if it's an image file by extension
+    // Process attachments: separate images (→ multimodal API) from text files (→ prepend).
+    let mut image_data_uris: Vec<String> = Vec::new();
+    let mut text_parts: Vec<String> = Vec::new();
+    for att in &input.attachments {
+        if att.starts_with("data:image/") {
+            // Already a data URI from the frontend (pasted/screenshot).
+            image_data_uris.push(att.clone());
+        } else if att.starts_with("data:") {
+            // Non-image data URI — skip (not expected).
+            continue;
+        } else {
+            let path = std::path::Path::new(att);
             let is_image = path.extension()
                 .and_then(|e| e.to_str())
                 .map(|e| matches!(e.to_lowercase().as_str(), "png" | "jpg" | "jpeg" | "gif" | "webp" | "bmp"))
@@ -88,10 +86,10 @@ pub async fn send_message(
                             "bmp" => "image/bmp",
                             _ => "image/png",
                         };
-                        parts.push(format!("![attached image](data:{mime};base64,{b64})"));
+                        image_data_uris.push(format!("data:{mime};base64,{b64}"));
                     }
                     Err(e) => {
-                        parts.push(format!("--- Attached file: {file_path} (error reading: {e}) ---"));
+                        text_parts.push(format!("--- Attached file: {att} (error reading: {e}) ---"));
                     }
                 }
             } else {
@@ -105,28 +103,28 @@ pub async fn send_message(
                         } else {
                             text
                         };
-                        parts.push(format!(
+                        text_parts.push(format!(
                             "--- Begin attached file: {filename} ---\n{truncated}\n--- End attached file: {filename} ---"
                         ));
                     }
                     Err(e) => {
-                        parts.push(format!(
-                            "--- Attached file: {file_path} (error reading: {e}) ---"
-                        ));
+                        text_parts.push(format!("--- Attached file: {att} (error reading: {e}) ---"));
                     }
                 }
             }
         }
-        if !input.content.trim().is_empty() {
-            parts.push(input.content.clone());
-        }
-        parts.join("\n\n")
-    };
+    }
+    if !input.content.trim().is_empty() {
+        text_parts.push(input.content.clone());
+    }
+    let text_content = text_parts.join("\n\n");
 
-    let result = engine
-        .send_message(resolved_id, enriched_content, event_tx)
-        .await
-        .map_err(|e| format!("Engine error: {e}"));
+    let result = if image_data_uris.is_empty() {
+        engine.send_message(resolved_id, text_content, event_tx).await
+    } else {
+        engine.send_message_with_images(resolved_id, text_content, image_data_uris, event_tx).await
+    }
+    .map_err(|e| format!("Engine error: {e}"));
 
     let _ = forward.await;
 

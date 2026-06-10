@@ -431,6 +431,28 @@ impl AgentEngine {
         user_input: String,
         event_tx: mpsc::UnboundedSender<EngineEvent>,
     ) -> Result<()> {
+        self.send_message_inner(thread_id, user_input, vec![], event_tx).await
+    }
+
+    /// Like [`send_message`] but with image data URIs for multimodal models.
+    /// Each URI must be a `data:image/...;base64,...` string.
+    pub async fn send_message_with_images(
+        &self,
+        thread_id: ThreadId,
+        user_input: String,
+        images: Vec<String>,
+        event_tx: mpsc::UnboundedSender<EngineEvent>,
+    ) -> Result<()> {
+        self.send_message_inner(thread_id, user_input, images, event_tx).await
+    }
+
+    async fn send_message_inner(
+        &self,
+        thread_id: ThreadId,
+        user_input: String,
+        images: Vec<String>,
+        event_tx: mpsc::UnboundedSender<EngineEvent>,
+    ) -> Result<()> {
         let state = self.get_or_load(&thread_id)?;
 
         // Replace the per-turn abort token with a fresh one. Any prior
@@ -468,7 +490,17 @@ impl AgentEngine {
         }
 
         // 1. Append user message to the in-memory log AND persist it.
-        let user_msg = ChatMessage::user(&user_input);
+        let user_msg = if images.is_empty() {
+            ChatMessage::user(&user_input)
+        } else {
+            let image_parts: Vec<deepseek_client::types::ContentPart> = images
+                .into_iter()
+                .map(|uri| deepseek_client::types::ContentPart::ImageUrl {
+                    image_url: deepseek_client::types::ImageUrl { url: uri },
+                })
+                .collect();
+            ChatMessage::user_with_images(user_input.clone(), image_parts)
+        };
         self.persist_message(&state, &user_msg).await?;
         state.log.write().append(user_msg);
         if !prompt_hook.additional_contexts.is_empty() {
