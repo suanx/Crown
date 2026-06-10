@@ -348,6 +348,18 @@ export class HybridClient implements AgentClient {
       () => this.mock.testProviderConnection(input),
     );
 
+  debugTestProvider = (
+    providerId: string,
+    model: string,
+    message: string,
+  ): Promise<string> =>
+    this.invokeCmd(
+      "debugTestProvider",
+      () => this.tauri.debugTestProvider(providerId, model, message),
+      () => this.mock.debugTestProvider(providerId, model, message),
+    );
+
+
   listHookEvents = (): Promise<HookEventInfo[]> =>
     this.invokeCmd("listHookEvents", () => this.tauri.listHookEvents(), () =>
       this.mock.listHookEvents(),

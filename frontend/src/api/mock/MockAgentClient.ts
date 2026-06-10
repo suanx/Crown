@@ -321,6 +321,16 @@ export class MockAgentClient implements AgentClient {
     };
   }
 
+  async debugTestProvider(
+    _providerId: string,
+    _model: string,
+    _message: string,
+  ): Promise<string> {
+    await delay();
+    return "HTTP 200 (mock)\n\n{\"choices\":[{\"message\":{\"content\":\"Mock response\"}}]}";
+  }
+
+
   async listHookEvents(): Promise<HookEventInfo[]> {
     await delay();
     return [

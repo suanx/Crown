@@ -132,6 +132,11 @@ export interface AgentClient {
   testProviderConnection(
     input: ProviderModelsInput,
   ): Promise<ProviderTestResult>;
+  debugTestProvider(
+    providerId: string,
+    model: string,
+    message: string,
+  ): Promise<string>;
   listHookEvents(): Promise<HookEventInfo[]>;
   getHooksConfig(input: HooksScopeInput): Promise<HookConfigFile>;
   saveHooksConfig(input: SaveHooksConfigInput): Promise<HookConfigFile>;
@@ -319,6 +324,7 @@ export const COMMAND_KEYS = [
   "ptySpawn",
   "ptyWrite",
   "ptyResize",
+  "debugTestProvider",
   "ptyKill",
   "exportDiagnostics",
   "listPermissionRules",

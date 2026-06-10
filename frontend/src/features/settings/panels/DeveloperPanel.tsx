@@ -2,11 +2,15 @@ import { useState } from "react";
 import { PanelTitle, Section, Row } from "./_shared";
 import { Button } from "@/shared/ui/Button";
 import { Pill } from "@/shared/ui/Pill";
+import { Dialog } from "@/shared/ui/Dialog";
+import { Input } from "@/shared/ui/Input";
 import {
   DownloadIcon,
   BugIcon,
   ExternalLinkIcon,
   RefreshIcon,
+  TestIcon,
+  CloseIcon,
 } from "@/shared/icons/set";
 import { useUiStore } from "@/stores/uiStore";
 import {
@@ -26,6 +30,14 @@ import { cn } from "@/shared/lib/cn";
 export function DeveloperPanel() {
   const stats = computeContractStats();
   const toggleDevtools = useUiStore((s) => s.toggleDevtools);
+  const [providerId, setProviderId] = useState("deepseek");
+  const [testModel, setTestModel] = useState("deepseek-chat");
+  const [testMessage, setTestMessage] = useState("Hello, what model are you?");
+  const [testResult, setTestResult] = useState<string | null>(null);
+  const [testError, setTestError] = useState<string | null>(null);
+  const [testing, setTesting] = useState(false);
+  const [showResult, setShowResult] = useState(false);
+
   const [diagnosticsPath, setDiagnosticsPath] = useState<string | null>(null);
   const [diagnosticsError, setDiagnosticsError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -51,6 +63,23 @@ export function DeveloperPanel() {
       setExporting(false);
     }
   }
+
+  async function testProvider() {
+    setTesting(true);
+    setTestResult(null);
+    setTestError(null);
+    try {
+      const result = await agentClient.debugTestProvider(providerId, testModel, testMessage);
+      setTestResult(result);
+      setShowResult(true);
+    } catch (error) {
+      setTestError(error instanceof Error ? error.message : String(error));
+      setShowResult(true);
+    } finally {
+      setTesting(false);
+    }
+  }
+
 
   return (
     <div>
@@ -170,6 +199,86 @@ export function DeveloperPanel() {
           }
         />
       </Section>
+
+      <Section title="测试供应商连接">
+        <Row
+          label="Provider ID"
+          description="供应商标识符，如 deepseek / openai"
+          control={
+            <Input
+              value={providerId}
+              onChange={(e) => setProviderId(e.target.value)}
+              placeholder="deepseek"
+              className="w-40"
+            />
+          }
+        />
+        <Row
+          label="模型"
+          description="模型名称，如 deepseek-chat / gpt-4o"
+          control={
+            <Input
+              value={testModel}
+              onChange={(e) => setTestModel(e.target.value)}
+              placeholder="deepseek-chat"
+              className="w-40"
+            />
+          }
+        />
+        <Row
+          label="消息"
+          description="发送的测试消息内容"
+          control={
+            <Input
+              value={testMessage}
+              onChange={(e) => setTestMessage(e.target.value)}
+              placeholder="Hello"
+              fullWidth
+            />
+          }
+        />
+        <Row
+          label="执行测试"
+          description="发送请求并查看原始响应"
+          control={
+            <Button
+              variant="primary"
+              size="sm"
+              icon={TestIcon}
+              disabled={testing}
+              onClick={testProvider}
+            >
+              {testing ? "测试中…" : "测试连接"}
+            </Button>
+          }
+        />
+      </Section>
+
+      {/* 测试结果弹窗 */}
+      <Dialog open={showResult} onClose={() => setShowResult(false)}>
+        <div className="p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-base font-semibold text-text-primary">
+              {testError ? "测试失败" : "测试结果"}
+            </h3>
+            <button
+              onClick={() => setShowResult(false)}
+              className="p-1 rounded-md hover:bg-hover text-text-secondary"
+            >
+              <CloseIcon size={16} />
+            </button>
+          </div>
+          <pre className="text-sm text-text-primary bg-canvas rounded-lg p-4 overflow-auto max-h-96 whitespace-pre-wrap break-all">
+            {testError ?? testResult}
+          </pre>
+          <div className="mt-4 flex justify-end">
+            <Button variant="secondary" size="sm" onClick={() => setShowResult(false)}>
+              关闭
+            </Button>
+          </div>
+        </div>
+      </Dialog>
+
     </div>
   );
 }

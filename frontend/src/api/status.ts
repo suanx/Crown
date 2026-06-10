@@ -82,6 +82,7 @@ export const CONTRACT_STATUS: Record<EndpointKey, ContractStatus> = {
   saveWebSearchConfig: "connected",
   fetchProviderModels: "connected",
   testProviderConnection: "connected",
+  debugTestProvider: "connected",
   listHookEvents: "connected",
   getHooksConfig: "connected",
   saveHooksConfig: "connected",

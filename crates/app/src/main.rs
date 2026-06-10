@@ -413,6 +413,8 @@ fn main() {
             // 终端 PTY
             commands::pty_list,
             commands::pty_snapshot,
+            commands::debug_test_provider,
+
             commands::pty_spawn,
             commands::pty_write,
             commands::pty_resize,

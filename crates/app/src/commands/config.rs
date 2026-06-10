@@ -911,6 +911,46 @@ pub async fn test_provider_connection(
     }
 }
 
+/// Useful for diagnosing provider compatibility issues.
+#[tauri::command]
+pub async fn debug_test_provider(
+    provider_id: String,
+    model: String,
+    message: String,
+) -> Result<String, String> {
+    let providers = read_stored_providers();
+    let p = providers.into_iter().find(|p| p.id == provider_id)
+        .ok_or_else(|| format!("Provider '{provider_id}' not found"))?;
+    let key = p.api_key.filter(|s| !s.is_empty()).unwrap_or_else(|| "placeholder".into());
+    let base_url = p.base_url.trim_end_matches('/').to_string();
+    let endpoint = format!("{base_url}/chat/completions");
+
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(30))
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    let body = serde_json::json!({
+        "model": model,
+        "messages": [{"role": "user", "content": message}],
+        "stream": false,
+        "max_tokens": 256,
+    });
+
+    let resp = client
+        .post(&endpoint)
+        .header("Authorization", format!("Bearer {key}"))
+        .header("Content-Type", "application/json")
+        .send()
+        .await
+        .map_err(|e| format!("HTTP request failed: {e}"))?;
+
+    let status = resp.status();
+    let text = resp.text().await.map_err(|e| e.to_string())?;
+
+    Ok(format!("HTTP {status}\n\n{text}"))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
