@@ -236,3 +236,259 @@
   --ds-brand-soft: rgba(129, 140, 248, 0.14);
   --ds-border-focus: #818CF8;
 }
+
+/* ============================================================================
+ * 视觉主题 — 通过 .theme-xxx 类切换完整界面风格
+ * 每个主题覆盖 :root(亮色) + .dark(暗色) 两套完整变量
+ * 配色方案 (.scheme-xxx) 在此基础上叠加，两者独立工作
+ * ========================================================================== */
+
+/* ── Classic（经典）— 当前 Crown 默认暖灰风格 ─────────────────────────────── */
+.theme-classic {
+  --ds-bg-canvas: #FFFFFF;
+  --ds-bg-elevated: #F7F6F3;
+  --ds-bg-overlay: #FFFFFF;
+  --ds-bg-hover: rgba(0, 0, 0, 0.04);
+  --ds-bg-input: #F0EFE9;
+  --ds-text-primary: #1F1F1E;
+  --ds-text-secondary: #6E6D6A;
+  --ds-text-tertiary: #7A7A77;
+  --ds-text-disabled: #C5C4BF;
+  --ds-text-inverse: #FAFAF7;
+  --ds-border-subtle: rgba(0, 0, 0, 0.10);
+  --ds-border-default: rgba(0, 0, 0, 0.10);
+  --ds-border-strong: rgba(0, 0, 0, 0.16);
+  --ds-reasoning-bg: #F4F1EA;
+  --ds-code-bg: #1F1F1E;
+  --ds-code-text: #E8E6E0;
+  --ds-tool-bg: #F7F6F3;
+  --ds-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --ds-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --ds-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.12);
+  --ds-scrollbar-thumb: rgba(0, 0, 0, 0.18);
+  --ds-scrollbar-thumb-hover: rgba(0, 0, 0, 0.30);
+}
+.dark .theme-classic {
+  --ds-bg-canvas: #1F1F1E;
+  --ds-bg-elevated: #262626;
+  --ds-bg-overlay: #2D2D2A;
+  --ds-bg-hover: rgba(255, 255, 255, 0.05);
+  --ds-bg-input: #2A2A28;
+  --ds-text-primary: #ECEAE3;
+  --ds-text-secondary: #A8A6A0;
+  --ds-text-tertiary: #75736E;
+  --ds-text-disabled: #4A4946;
+  --ds-text-inverse: #1F1F1E;
+  --ds-border-subtle: rgba(255, 255, 255, 0.06);
+  --ds-border-default: rgba(255, 255, 255, 0.10);
+  --ds-border-strong: rgba(255, 255, 255, 0.16);
+  --ds-reasoning-bg: #232220;
+  --ds-code-bg: #16161A;
+  --ds-code-text: #ECEAE3;
+  --ds-tool-bg: #232220;
+  --ds-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30);
+  --ds-shadow-md: 0 4px 14px rgba(0, 0, 0, 0.45);
+  --ds-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
+  --ds-scrollbar-thumb: rgba(255, 255, 255, 0.10);
+  --ds-scrollbar-thumb-hover: rgba(255, 255, 255, 0.20);
+}
+
+/* ── Minimal（简约）— 更干净、更少边框、更多留白 ──────────────────────────── */
+.theme-minimal {
+  --ds-bg-canvas: #FFFFFF;
+  --ds-bg-elevated: #FAFAF8;
+  --ds-bg-overlay: #FFFFFF;
+  --ds-bg-hover: rgba(0, 0, 0, 0.03);
+  --ds-bg-input: #F5F5F2;
+  --ds-text-primary: #1A1A18;
+  --ds-text-secondary: #787874;
+  --ds-text-tertiary: #9C9C98;
+  --ds-text-disabled: #D0D0CC;
+  --ds-text-inverse: #FFFFFF;
+  --ds-border-subtle: rgba(0, 0, 0, 0.06);
+  --ds-border-default: rgba(0, 0, 0, 0.08);
+  --ds-border-strong: rgba(0, 0, 0, 0.12);
+  --ds-reasoning-bg: #F8F8F5;
+  --ds-code-bg: #1A1A18;
+  --ds-code-text: #F0F0EC;
+  --ds-tool-bg: #FAFAF8;
+  --ds-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.03);
+  --ds-shadow-md: 0 3px 10px rgba(0, 0, 0, 0.05);
+  --ds-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --ds-scrollbar-thumb: rgba(0, 0, 0, 0.12);
+  --ds-scrollbar-thumb-hover: rgba(0, 0, 0, 0.22);
+}
+.dark .theme-minimal {
+  --ds-bg-canvas: #181817;
+  --ds-bg-elevated: #20201E;
+  --ds-bg-overlay: #282826;
+  --ds-bg-hover: rgba(255, 255, 255, 0.04);
+  --ds-bg-input: #222220;
+  --ds-text-primary: #E8E8E2;
+  --ds-text-secondary: #989894;
+  --ds-text-tertiary: #6A6A66;
+  --ds-text-disabled: #3E3E3C;
+  --ds-text-inverse: #181817;
+  --ds-border-subtle: rgba(255, 255, 255, 0.04);
+  --ds-border-default: rgba(255, 255, 255, 0.07);
+  --ds-border-strong: rgba(255, 255, 255, 0.12);
+  --ds-reasoning-bg: #1E1E1C;
+  --ds-code-bg: #10100F;
+  --ds-code-text: #E8E8E2;
+  --ds-tool-bg: #1E1E1C;
+  --ds-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --ds-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --ds-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
+  --ds-scrollbar-thumb: rgba(255, 255, 255, 0.08);
+  --ds-scrollbar-thumb-hover: rgba(255, 255, 255, 0.16);
+}
+
+/* ── Vibrant（明快）— 更高饱和、更锐利、现代感 ───────────────────────────── */
+.theme-vibrant {
+  --ds-bg-canvas: #F8F8FE;
+  --ds-bg-elevated: #FFFFFF;
+  --ds-bg-overlay: #FFFFFF;
+  --ds-bg-hover: rgba(60, 60, 200, 0.04);
+  --ds-bg-input: #F0F0F8;
+  --ds-text-primary: #121220;
+  --ds-text-secondary: #555570;
+  --ds-text-tertiary: #8888A0;
+  --ds-text-disabled: #C0C0D0;
+  --ds-text-inverse: #FFFFFF;
+  --ds-border-subtle: rgba(60, 60, 200, 0.06);
+  --ds-border-default: rgba(60, 60, 200, 0.10);
+  --ds-border-strong: rgba(60, 60, 200, 0.14);
+  --ds-reasoning-bg: #F0F0F8;
+  --ds-code-bg: #121220;
+  --ds-code-text: #E8E8F0;
+  --ds-tool-bg: #FFFFFF;
+  --ds-shadow-sm: 0 1px 3px rgba(60, 60, 200, 0.05);
+  --ds-shadow-md: 0 4px 14px rgba(60, 60, 200, 0.08);
+  --ds-shadow-lg: 0 12px 36px rgba(60, 60, 200, 0.12);
+  --ds-scrollbar-thumb: rgba(60, 60, 200, 0.15);
+  --ds-scrollbar-thumb-hover: rgba(60, 60, 200, 0.25);
+}
+.dark .theme-vibrant {
+  --ds-bg-canvas: #0E0E1A;
+  --ds-bg-elevated: #16162A;
+  --ds-bg-overlay: #1E1E36;
+  --ds-bg-hover: rgba(120, 120, 255, 0.06);
+  --ds-bg-input: #181830;
+  --ds-text-primary: #E8E8FE;
+  --ds-text-secondary: #9898C0;
+  --ds-text-tertiary: #686888;
+  --ds-text-disabled: #383850;
+  --ds-text-inverse: #0E0E1A;
+  --ds-border-subtle: rgba(120, 120, 255, 0.08);
+  --ds-border-default: rgba(120, 120, 255, 0.12);
+  --ds-border-strong: rgba(120, 120, 255, 0.18);
+  --ds-reasoning-bg: #14142A;
+  --ds-code-bg: #080812;
+  --ds-code-text: #E8E8FE;
+  --ds-tool-bg: #14142A;
+  --ds-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
+  --ds-shadow-md: 0 4px 14px rgba(0, 0, 0, 0.50);
+  --ds-shadow-lg: 0 12px 36px rgba(0, 0, 0, 0.60);
+  --ds-scrollbar-thumb: rgba(120, 120, 255, 0.12);
+  --ds-scrollbar-thumb-hover: rgba(120, 120, 255, 0.22);
+}
+
+/* ── Sepia（暖纸）— 暖色调、护眼、阅读感 ─────────────────────────────────── */
+.theme-sepia {
+  --ds-bg-canvas: #FDF8F0;
+  --ds-bg-elevated: #F5EDE0;
+  --ds-bg-overlay: #FDF8F0;
+  --ds-bg-hover: rgba(160, 120, 60, 0.06);
+  --ds-bg-input: #EDE4D4;
+  --ds-text-primary: #3A3028;
+  --ds-text-secondary: #7A6E60;
+  --ds-text-tertiary: #A09888;
+  --ds-text-disabled: #C8C0B4;
+  --ds-text-inverse: #FDF8F0;
+  --ds-border-subtle: rgba(160, 120, 60, 0.10);
+  --ds-border-default: rgba(160, 120, 60, 0.14);
+  --ds-border-strong: rgba(160, 120, 60, 0.20);
+  --ds-reasoning-bg: #F5EDE0;
+  --ds-code-bg: #3A3028;
+  --ds-code-text: #EDE4D4;
+  --ds-tool-bg: #F5EDE0;
+  --ds-shadow-sm: 0 1px 2px rgba(120, 80, 40, 0.06);
+  --ds-shadow-md: 0 4px 12px rgba(120, 80, 40, 0.10);
+  --ds-shadow-lg: 0 12px 32px rgba(120, 80, 40, 0.14);
+  --ds-scrollbar-thumb: rgba(120, 80, 40, 0.20);
+  --ds-scrollbar-thumb-hover: rgba(120, 80, 40, 0.30);
+}
+.dark .theme-sepia {
+  --ds-bg-canvas: #1E1A14;
+  --ds-bg-elevated: #2A241C;
+  --ds-bg-overlay: #322C24;
+  --ds-bg-hover: rgba(200, 160, 100, 0.06);
+  --ds-bg-input: #242018;
+  --ds-text-primary: #D8D0C0;
+  --ds-text-secondary: #9A9080;
+  --ds-text-tertiary: #6E6658;
+  --ds-text-disabled: #403A30;
+  --ds-text-inverse: #1E1A14;
+  --ds-border-subtle: rgba(200, 160, 100, 0.06);
+  --ds-border-default: rgba(200, 160, 100, 0.10);
+  --ds-border-strong: rgba(200, 160, 100, 0.16);
+  --ds-reasoning-bg: #221E18;
+  --ds-code-bg: #100E0C;
+  --ds-code-text: #D8D0C0;
+  --ds-tool-bg: #221E18;
+  --ds-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30);
+  --ds-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45);
+  --ds-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.55);
+  --ds-scrollbar-thumb: rgba(200, 160, 100, 0.10);
+  --ds-scrollbar-thumb-hover: rgba(200, 160, 100, 0.20);
+}
+
+/* ── OLED — 暗色真黑 (#000)，亮色纯白高对比 ──────────────────────────────── */
+.theme-oled {
+  --ds-bg-canvas: #FAFAFA;
+  --ds-bg-elevated: #FFFFFF;
+  --ds-bg-overlay: #FFFFFF;
+  --ds-bg-hover: rgba(0, 0, 0, 0.04);
+  --ds-bg-input: #F0F0F0;
+  --ds-text-primary: #111111;
+  --ds-text-secondary: #666666;
+  --ds-text-tertiary: #888888;
+  --ds-text-disabled: #CCCCCC;
+  --ds-text-inverse: #FFFFFF;
+  --ds-border-subtle: rgba(0, 0, 0, 0.08);
+  --ds-border-default: rgba(0, 0, 0, 0.10);
+  --ds-border-strong: rgba(0, 0, 0, 0.18);
+  --ds-reasoning-bg: #F4F4F4;
+  --ds-code-bg: #111111;
+  --ds-code-text: #EEEEEE;
+  --ds-tool-bg: #FFFFFF;
+  --ds-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --ds-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --ds-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.10);
+  --ds-scrollbar-thumb: rgba(0, 0, 0, 0.15);
+  --ds-scrollbar-thumb-hover: rgba(0, 0, 0, 0.25);
+}
+.dark .theme-oled {
+  --ds-bg-canvas: #000000;
+  --ds-bg-elevated: #0E0E0E;
+  --ds-bg-overlay: #1A1A1A;
+  --ds-bg-hover: rgba(255, 255, 255, 0.04);
+  --ds-bg-input: #141414;
+  --ds-text-primary: #EEEEEE;
+  --ds-text-secondary: #999999;
+  --ds-text-tertiary: #666666;
+  --ds-text-disabled: #333333;
+  --ds-text-inverse: #000000;
+  --ds-border-subtle: rgba(255, 255, 255, 0.05);
+  --ds-border-default: rgba(255, 255, 255, 0.08);
+  --ds-border-strong: rgba(255, 255, 255, 0.14);
+  --ds-reasoning-bg: #0E0E0E;
+  --ds-code-bg: #000000;
+  --ds-code-text: #EEEEEE;
+  --ds-tool-bg: #0E0E0E;
+  --ds-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --ds-shadow-md: 0 4px 14px rgba(0, 0, 0, 0.55);
+  --ds-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.70);
+  --ds-scrollbar-thumb: rgba(255, 255, 255, 0.06);
+  --ds-scrollbar-thumb-hover: rgba(255, 255, 255, 0.14);
+}

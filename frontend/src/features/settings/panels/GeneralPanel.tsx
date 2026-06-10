@@ -6,7 +6,7 @@ import { Pill } from "@/shared/ui/Pill";
 import { Icon } from "@/shared/icons/Icon";
 import { SunIcon, MoonIcon, SystemIcon } from "@/shared/icons/set";
 import { cn } from "@/shared/lib/cn";
-import type { ColorScheme, ThemeMode } from "@/api";
+import type { ColorScheme, ThemeMode, ThemeVariant } from "@/api";
 
 const SCHEMES: Array<{ id: ColorScheme; label: string; color: string }> = [
   { id: "default", label: "深蓝", color: "#4D6BFE" },
@@ -18,9 +18,19 @@ const SCHEMES: Array<{ id: ColorScheme; label: string; color: string }> = [
   { id: "midnight",label: "午夜", color: "#4F46E5" },
 ];
 
+const THEMES: Array<{ id: ThemeVariant; label: string; desc: string }> = [
+  { id: "classic", label: "经典",  desc: "暖灰·默认" },
+  { id: "minimal", label: "简约",  desc: "干净·留白" },
+  { id: "vibrant", label: "明快",  desc: "鲜艳·现代" },
+  { id: "sepia",   label: "暖纸",  desc: "暖色·护眼" },
+  { id: "oled",    label: "OLED",  desc: "真黑·省电" },
+];
+
 export function GeneralPanel() {
   const theme = useUiStore((s) => s.theme);
   const setTheme = useUiStore((s) => s.setTheme);
+  const themeVariant = useUiStore((s) => s.themeVariant);
+  const setThemeVariant = useUiStore((s) => s.setThemeVariant);
   const colorScheme = useUiStore((s) => s.colorScheme);
   const setColorScheme = useUiStore((s) => s.setColorScheme);
   const showBalance = useUiStore((s) => s.showBalanceInSidebar);
@@ -46,9 +56,33 @@ export function GeneralPanel() {
 
       <Section title="外观">
         <Row
-          label="主题"
-          description="跟随系统时根据 OS 偏好切换"
+          label="亮度"
+          description="亮色 / 暗色 / 跟随系统"
           control={<ThemeSwitcher value={theme} onChange={updateTheme} />}
+        />
+        <Row
+          label="视觉主题"
+          description="整体界面风格 — 不改变品牌色"
+          control={
+            <div className="flex gap-1.5">
+              {THEMES.map((t) => (
+                <button
+                  key={t.id}
+                  title={t.desc}
+                  aria-label={t.label}
+                  onClick={() => setThemeVariant(t.id)}
+                  className={cn(
+                    "px-2.5 h-7 text-xs rounded-md border transition-all focus-ring",
+                    themeVariant === t.id
+                      ? "bg-elevated text-text-primary border-border-strong"
+                      : "bg-canvas text-text-tertiary border-border-default hover:text-text-secondary hover:border-border-strong",
+                  )}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          }
         />
         <Row
           label="配色"

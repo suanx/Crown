@@ -1,14 +1,15 @@
 import { create } from "zustand";
-import type { ColorScheme, PermissionMode, ThemeMode, ThinkingEffort } from "@/api";
+import type { ColorScheme, PermissionMode, ThemeMode, ThemeVariant, ThinkingEffort } from "@/api";
 
 /**
  * UI 状态 — 仅会话内的 ephemeral 状态.
- * Workspace dock (sidebar / right panel / bottom panel) 在 workspaceStore.
- * Approval 决策从这里删除 — 改为内嵌在 ToolCallCard 内部 state.
  */
 interface UiState {
   theme: ThemeMode;
   setTheme: (m: ThemeMode) => void;
+
+  themeVariant: ThemeVariant;
+  setThemeVariant: (v: ThemeVariant) => void;
 
   colorScheme: ColorScheme;
   setColorScheme: (s: ColorScheme) => void;
@@ -31,32 +32,32 @@ interface UiState {
   showMessageCost: boolean;
   setShowMessageCost: (v: boolean) => void;
 
-  /** Devtools 面板 (Ctrl+Shift+D). */
   devtoolsOpen: boolean;
   toggleDevtools: (v?: boolean) => void;
 }
 
-const UI_STORAGE_KEY = "ds.ui.v2";
+const UI_STORAGE_KEY = "ds.ui.v3";
 
 type PersistedUi = Pick<
   UiState,
-  "theme" | "colorScheme" | "showBalanceInSidebar" | "showMessageCost"
+  "theme" | "themeVariant" | "colorScheme" | "showBalanceInSidebar" | "showMessageCost"
 >;
 
 function loadPersistedUi(): PersistedUi {
   if (typeof window === "undefined") {
-    return { theme: "dark", colorScheme: "default", showBalanceInSidebar: true, showMessageCost: false };
+    return { theme: "dark", themeVariant: "classic", colorScheme: "default", showBalanceInSidebar: true, showMessageCost: false };
   }
   try {
     return {
       theme: "dark",
+      themeVariant: "classic",
       colorScheme: "default",
       showBalanceInSidebar: true,
       showMessageCost: false,
       ...JSON.parse(localStorage.getItem(UI_STORAGE_KEY) || "{}"),
     };
   } catch {
-    return { theme: "dark", colorScheme: "default", showBalanceInSidebar: true, showMessageCost: false };
+    return { theme: "dark", themeVariant: "classic", colorScheme: "default", showBalanceInSidebar: true, showMessageCost: false };
   }
 }
 
@@ -80,6 +81,13 @@ export const useUiStore = create<UiState>((set) => ({
     set({ theme });
     savePersistedUi({ theme });
     applyTheme(theme);
+  },
+
+  themeVariant: persistedUi.themeVariant,
+  setThemeVariant: (themeVariant) => {
+    set({ themeVariant });
+    savePersistedUi({ themeVariant });
+    applyThemeVariant(themeVariant);
   },
 
   colorScheme: persistedUi.colorScheme,
@@ -131,9 +139,17 @@ function applyTheme(theme: ThemeMode) {
   root.classList.toggle("dark", isDark);
 }
 
+const ALL_VARIANTS: ThemeVariant[] = ["classic", "minimal", "vibrant", "sepia", "oled"];
+
+function applyThemeVariant(variant: ThemeVariant) {
+  const root = document.documentElement;
+  for (const v of ALL_VARIANTS) {
+    root.classList.toggle(`theme-${v}`, v === variant);
+  }
+}
+
 function applyColorScheme(scheme: ColorScheme) {
   const root = document.documentElement;
-  // Remove all scheme classes then add current
   const schemes: ColorScheme[] = ["default", "ocean", "orchid", "flame", "rose", "forest", "midnight"];
   for (const s of schemes) {
     root.classList.toggle(`scheme-${s}`, s === scheme);
@@ -142,4 +158,5 @@ function applyColorScheme(scheme: ColorScheme) {
 
 // Apply persisted settings on init
 applyTheme(useUiStore.getState().theme);
+applyThemeVariant(useUiStore.getState().themeVariant);
 applyColorScheme(useUiStore.getState().colorScheme);

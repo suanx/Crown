@@ -93,6 +93,17 @@ export type ColorScheme =
   | "forest"
   | "midnight";
 
+/** 视觉主题 — 完整的界面风格 */
+export type ThemeVariant =
+  | "classic"
+  | "minimal"
+  | "vibrant"
+  | "sepia"
+  | "oled";
+  | "rose"
+  | "forest"
+  | "midnight";
+
 export type ThinkingEffort = "low" | "medium" | "high" | "ultra";
 
 /**
