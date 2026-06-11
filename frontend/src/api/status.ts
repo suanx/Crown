@@ -108,6 +108,8 @@ export const CONTRACT_STATUS: Record<EndpointKey, ContractStatus> = {
   saveOutputStyle: "connected",
   setActiveOutputStyle: "connected",
   deleteOutputStyle: "connected",
+  // 长期记忆 — 后端 read_global_memory 真实现.
+  readGlobalMemory: "connected",
   // Rewind (P2) — 后端 rewind_thread/list_rewind_points 真实现.
   rewindThread: "connected",
   listRewindPoints: "connected",

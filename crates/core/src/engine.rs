@@ -390,7 +390,7 @@ impl AgentEngine {
             cwd: cwd.as_ref().map(|p| p.to_string_lossy().into_owned()),
             permission_mode: PermissionMode::Default.as_str().to_string(),
             provider_id: "deepseek".to_string(),
-            thinking_effort: Some("medium".to_string()),
+            thinking_effort: Some("high".to_string()),
             parent_thread_id: None,
             project_id: None,
         })?;

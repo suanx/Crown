@@ -336,6 +336,11 @@ export class TauriAgentClient implements AgentClient {
     return invoke<void>("delete_output_style", { name });
   }
 
+  // ── 长期记忆 ──────────────────────────────────────────────────────────────
+  readGlobalMemory(): Promise<string> {
+    return invoke<string>("read_global_memory");
+  }
+
   // ── Rewind (P2) ───────────────────────────────────────────────────────────
   rewindThread(threadId: string, messageSeq: number): Promise<Thread> {
     return invoke<Thread>("rewind_thread", { threadId, messageSeq });

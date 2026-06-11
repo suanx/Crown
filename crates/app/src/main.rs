@@ -378,6 +378,7 @@ fn main() {
             commands::test_hook,
             commands::get_project_hooks_trust,
             commands::set_project_hooks_trust,
+            commands::read_global_memory,
             // mcp
             commands::list_mcp_servers,
             commands::restart_mcp_server,

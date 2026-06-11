@@ -498,6 +498,13 @@ export class HybridClient implements AgentClient {
       () => this.mock.deleteOutputStyle(name),
     );
 
+  readGlobalMemory = (): Promise<string> =>
+    this.invokeCmd("readGlobalMemory", () => this.tauri.readGlobalMemory(), () =>
+      this.mock.readGlobalMemory(),
+    );
+
+
+
   rewindThread = (threadId: string, messageSeq: number): Promise<Thread> =>
     this.invokeCmd(
       "rewindThread",

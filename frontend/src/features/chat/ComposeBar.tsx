@@ -167,6 +167,30 @@ export function ComposeBar({
         pickCommand(menuCommands[safeMenuIndex]);
         return;
       }
+      // Allow Ctrl/Cmd+arrow to close menu and navigate text
+      if ((e.ctrlKey || e.metaKey) && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
+        setMenuIndex(0);
+        // fall through to move cursor
+      }
+    }
+    // Tab → 插入 2 个空格
+    if (e.key === "Tab" && !menuOpen) {
+      e.preventDefault();
+      const ta = ref.current;
+      if (!ta) return;
+      const start = ta.selectionStart;
+      const end = ta.selectionEnd;
+      const newText = text.slice(0, start) + "  " + text.slice(end);
+      setText(newText);
+      requestAnimationFrame(() => {
+        ta.selectionStart = ta.selectionEnd = start + 2;
+      });
+      return;
+    }
+    // Ctrl+方向键跳词 (Windows 原生支持,此处确保不被其他逻辑干扰)
+    if ((e.ctrlKey || e.metaKey) && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
+      // 让浏览器的默认光标跳词行为继续
+      return;
     }
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -260,6 +284,13 @@ export function ComposeBar({
         <ToolbarBtn icon={GlobeIcon} label="联网搜索" />
 
         <div className="flex-1" />
+
+        {/* 字数统计 — 超过 50 字符时显示 */}
+        {text.length > 50 && (
+          <span className="text-[10px] text-text-tertiary font-mono tabular-nums mr-1">
+            {text.length}
+          </span>
+        )}
 
         {/* Context Usage 圆环 */}
         <ContextRing />

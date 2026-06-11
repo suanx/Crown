@@ -36,7 +36,7 @@ pub async fn send_message(
             cwd: None,
             permission_mode: "default".into(),
             provider_id,
-            thinking_effort: Some("medium".into()),
+            thinking_effort: Some("high".into()),
             parent_thread_id: None,
             project_id: None,
         })

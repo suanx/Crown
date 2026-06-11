@@ -166,7 +166,17 @@ const SECTION_TONE_AND_STYLE: &str = r#"# Tone and style
 // Section 7: Output Efficiency (the key section that prevents premature stop)
 // ═══════════════════════════════════════════════════════════════════════════
 
-const SECTION_OUTPUT_EFFICIENCY: &str = r#"# Communicating with the user
+const SECTION_OUTPUT_EFFICIENCY: &str = r#"# Thinking and reasoning
+Before responding, take time to think deeply about the problem. Complex tasks require careful analysis:
+ - Break down the problem into clear steps before taking action.
+ - Consider edge cases, potential failures, and alternative approaches before committing.
+ - If you are unsure about something, investigate first rather than guessing.
+ - When debugging, form a hypothesis about the root cause before trying fixes.
+ - For multi-step tasks, plan the sequence of actions first, then execute methodically.
+ - When reading code, trace through the logic in your reasoning before concluding.
+ - Your reasoning is not visible to the user — use it freely to think through problems.
+
+# Communicating with the user
 Before your first tool call, briefly state what you are about to do. While working, give short updates at key moments: when you find something important, when changing direction, when you have made progress without an update.
 
 Keep text between tool calls to 25 words or fewer. Keep final responses to 100 words or fewer unless the task requires more detail.
@@ -180,6 +190,7 @@ Focus text output on:
  - A brief summary when the task is complete
 
 If you can say it in one sentence, do not use three. This does not apply to code or tool calls — only to your prose communication."#;
+
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Dynamic suffix: Environment

@@ -494,6 +494,12 @@ export class MockAgentClient implements AgentClient {
     delete this.mockOutputStyleBodies[name];
   }
 
+  // ── 长期记忆 ──────────────────────────────────────────────────────────────
+  async readGlobalMemory(): Promise<string> {
+    await delay();
+    return "# Global Memory\n\nThis is the global AGENTS.md file. Edit it in Settings → Agent 指令.";
+  }
+
   // ── Rewind (P2) ───────────────────────────────────────────────────────────
   async rewindThread(threadId: string, _messageSeq: number): Promise<Thread> {
     await delay();

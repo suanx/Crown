@@ -218,6 +218,16 @@ pub async fn set_project_hooks_trust(
     Ok(ProjectHooksTrustDto { trusted })
 }
 
+/// Read the global memory file (AGENTS.md). Returns empty string if not found.
+#[tauri::command]
+pub async fn read_global_memory(state: tauri::State<'_, crate::AppState>) -> Result<String, String> {
+    let path = state.data_root.join("AGENTS.md");
+    match std::fs::read_to_string(&path) {
+        Ok(content) => Ok(content),
+        Err(_) => Ok(String::new()),
+    }
+}
+
 async fn run_config_change_hook(key: &str, scope: &str, value: Option<String>) {
     let abort = CancellationToken::new();
     let result = hooks::HookRunner::load(None)

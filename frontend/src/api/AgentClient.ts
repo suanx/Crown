@@ -168,6 +168,10 @@ export interface AgentClient {
   /** 重新扫描 skill 目录,返回发现数量 (刷新信号). */
   skillReload(threadId?: string): Promise<number>;
 
+  // ── 长期记忆 ──────────────────────────────────────────────────────────────
+  /** 读取全局记忆文件 (AGENTS.md), 不存在时返回空字符串. */
+  readGlobalMemory(): Promise<string>;
+
   // ── Output Styles (Phase 2) ───────────────────────────────────────────────
   /** 列出所有输出风格 (含当前生效标记). */
   listOutputStyles(): Promise<OutputStyle[]>;
@@ -311,6 +315,7 @@ export const COMMAND_KEYS = [
   "saveOutputStyle",
   "setActiveOutputStyle",
   "deleteOutputStyle",
+  "readGlobalMemory",
   "rewindThread",
   "getUsageChart",
   "listRewindPoints",

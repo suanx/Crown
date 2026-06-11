@@ -1,8 +1,31 @@
 import { PanelTitle, Section, Row } from "./_shared";
 import { Pill } from "@/shared/ui/Pill";
 import { BrandLogo } from "@/shared/icons/BrandLogo";
+import { agentClient } from "@/api";
+import { useState } from "react";
+import { DownloadSimple } from "@phosphor-icons/react";
 
 export function AboutPanel() {
+  const [exporting, setExporting] = useState(false);
+
+  async function handleExportMemory() {
+    setExporting(true);
+    try {
+      const content = await agentClient.readGlobalMemory();
+      const blob = new Blob([content], { type: "text/markdown" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "AGENTS.md";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
     <div>
       <PanelTitle title="关于" />
@@ -38,6 +61,27 @@ export function AboutPanel() {
           label="第三方依赖"
           description="React · Tailwind · Phosphor · Tauri"
           control={<Pill tone="info">可用</Pill>}
+        />
+      </Section>
+
+      <Section title="数据">
+        <Row
+          label="导出长期记忆"
+          description="下载 AGENTS.md 文件备份到本地"
+          control={
+            <button
+              onClick={handleExportMemory}
+              disabled={exporting}
+              className="h-8 px-3 text-xs rounded-md inline-flex items-center gap-1.5
+                         bg-elevated text-text-primary border border-border-default
+                         hover:bg-hover-bg hover:border-border-strong
+                         disabled:opacity-50 disabled:cursor-not-allowed
+                         transition-colors focus-ring"
+            >
+              <DownloadSimple size={14} weight="regular" />
+              {exporting ? "导出中…" : "导出记忆"}
+            </button>
+          }
         />
       </Section>
     </div>
