@@ -223,7 +223,7 @@ pub trait ProviderClientResolver: Send + Sync {
 fn turn_chat_opts(
     tools: Vec<deepseek_client::types::ToolSpec>,
     provider: ProviderId,
-    provider_id: &str,
+    _provider_id: &str,
     thinking_effort: &str,
 ) -> ChatOpts {
     let extra_body = match provider {
