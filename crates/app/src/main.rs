@@ -391,6 +391,7 @@ fn main() {
             commands::skill_list,
             commands::skill_read,
             commands::skill_reload,
+            commands::skill_delete,
             // output styles
             commands::list_output_styles,
             commands::read_output_style,

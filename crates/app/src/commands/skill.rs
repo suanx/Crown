@@ -66,3 +66,18 @@ pub async fn skill_reload(
     let cwd = cwd_for_thread(&state, thread_id.as_deref());
     Ok(discover_all(cwd.as_deref()).len())
 }
+
+/// Delete a skill by name. Removes the skill directory from disk.
+/// Only works for global native skills.
+#[tauri::command]
+pub async fn skill_delete(
+    name: String,
+) -> Result<(), String> {
+    let metas = discover_all(None);
+    let meta = metas
+        .iter()
+        .find(|m| m.name == name && m.scope == deepseek_skill::discovery::Scope::Global && m.source == deepseek_skill::discovery::Source::Native)
+        .ok_or_else(|| format!("skill '{name}' not found or cannot be deleted"))?;
+    std::fs::remove_dir_all(&meta.path).map_err(|e| format!("delete failed: {e}"))
+}
+

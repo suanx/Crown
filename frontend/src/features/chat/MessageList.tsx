@@ -186,13 +186,10 @@ function renderMessages(
     }
     if (m.role === "assistant") {
       return (
-        <div key={m.id} data-msg-id={m.id}>
           <AssistantMessage
             message={m}
-            providerId={thread.providerId}
             isActive={m.id === lastMainMessageId}
           />
-        </div>
       );
     }
     return null;

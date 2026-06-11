@@ -351,6 +351,7 @@ pub struct AppConfigDto {
     pub budget: BudgetDto,
     pub compaction: CompactionDto,
     pub shell: ShellDto,
+    pub subagent: SubagentDto,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -373,6 +374,15 @@ pub struct ShellDto {
     pub timeout_secs: u64,
     pub max_output_bytes: u64,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SubagentDto {
+    pub max_subtasks: u64,
+    pub model: String,
+}
+
+
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -413,6 +423,7 @@ pub struct ConfigPatchDto {
     pub budget: Option<BudgetDto>,
     pub compaction: Option<CompactionDto>,
     pub shell: Option<ShellDto>,
+    pub subagent: Option<SubagentDto>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

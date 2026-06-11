@@ -4,18 +4,9 @@ import { CaretRightIcon, ReasoningIcon } from "@/shared/icons/set";
 
 export interface ReasoningBlockProps {
   content: string;
-  /** 整条消息是否仍在流式输出中. */
   streaming?: boolean;
 }
 
-/**
- * 思维链块 —— 实时显示模型的思考过程。
- *
- * 展开逻辑：
- *   - 流式进行中或有内容时：默认展开，实时显示思考文本。
- *   - 用户手动折叠后：尊重用户选择。
- *   - 折叠态：头部显示内容预览。
- */
 export function ReasoningBlock({
   content,
   streaming = false,
@@ -24,7 +15,6 @@ export function ReasoningBlock({
   const userTouched = useRef(false);
   const hasContent = content.trim().length > 0;
 
-  // Reset open when streaming starts a new thought
   useEffect(() => {
     if (streaming && !userTouched.current) setOpen(true);
   }, [streaming]);

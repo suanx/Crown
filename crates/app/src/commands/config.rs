@@ -14,7 +14,7 @@ use std::time::Instant;
 use crate::dto::{
     AppConfigDto, BudgetDto, CompactionDto, ConfigPatchDto, ProviderConfigDto, ProviderModelDto,
     ProviderModelsInput, ProviderTestResultDto, SaveProvidersInput, SaveWebSearchConfigInput,
-    ShellDto, WebSearchConfigDto, WebSearchProviderDto,
+    ShellDto, SubagentDto, WebSearchConfigDto, WebSearchProviderDto,
 };
 use crate::AppState;
 
@@ -684,6 +684,15 @@ pub async fn get_config(_state: tauri::State<'_, AppState>) -> Result<AppConfigD
             max_output_bytes: 1_048_576,
         });
 
+    let subagent = json
+        .get("subagent")
+        .and_then(|v| serde_json::from_value(v.clone()).ok())
+        .unwrap_or(SubagentDto {
+            max_subtasks: 5,
+            model: String::new(),
+        });
+
+
     Ok(AppConfigDto {
         api_key_present,
         base_url,
@@ -697,6 +706,7 @@ pub async fn get_config(_state: tauri::State<'_, AppState>) -> Result<AppConfigD
         budget,
         compaction,
         shell,
+        subagent,
     })
 }
 
@@ -734,6 +744,10 @@ pub async fn set_config(
     if let Some(shell) = patch.shell {
         json["shell"] = serde_json::to_value(shell).map_err(|e| e.to_string())?;
     }
+    if let Some(subagent) = patch.subagent {
+        json["subagent"] = serde_json::to_value(subagent).map_err(|e| e.to_string())?;
+    }
+
     write_config_json(&json)?;
     get_config(state).await
 }

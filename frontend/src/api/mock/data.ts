@@ -734,6 +734,11 @@ export const MOCK_CONFIG: AppConfig = {
     timeoutSecs: 120,
     maxOutputBytes: 1_048_576,
   },
+  subagent: {
+    maxSubtasks: 5,
+    model: "",
+  },
+
 };
 
 export const MOCK_USAGE_STATS: UsageStats = {

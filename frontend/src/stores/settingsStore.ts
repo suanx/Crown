@@ -51,6 +51,11 @@ const DEFAULT_SETTINGS: SettingsData = {
     timeoutSecs: 120,
     maxOutputBytes: 1048576,
   },
+  subagent: {
+    maxSubtasks: 5,
+    model: "",
+  },
+
 };
 
 // ── 类型 ────────────────────────────────────────────────────────────────────
@@ -88,6 +93,11 @@ export interface SettingsData {
     timeoutSecs: number;
     maxOutputBytes: number;
   };
+  subagent: {
+    maxSubtasks: number;
+    model: string;
+  };
+
 }
 
 export type TestConnectionResult =
@@ -134,6 +144,8 @@ function loadFromLocal(): SettingsData {
       budget: { ...DEFAULT_SETTINGS.budget, ...parsed.budget },
       compaction: { ...DEFAULT_SETTINGS.compaction, ...parsed.compaction },
       shell: { ...DEFAULT_SETTINGS.shell, ...parsed.shell },
+      subagent: { ...DEFAULT_SETTINGS.subagent, ...parsed.subagent },
+
     };
   } catch {
     return DEFAULT_SETTINGS;
@@ -164,6 +176,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
       budget: s.budget,
       compaction: s.compaction,
       shell: s.shell,
+      subagent: s.subagent,
+
     };
   }
 
@@ -193,6 +207,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
             budget: config.budget,
             compaction: config.compaction,
             shell: config.shell,
+            subagent: config.subagent,
+
           };
           set({ ...data, loaded: true });
           // 同时缓存到 local 作为 fallback
@@ -304,6 +320,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
         budget: data.budget,
         compaction: data.compaction,
         shell: data.shell,
+        subagent: data.subagent,
+
       };
       try {
         await agentClient.setConfig(patch);

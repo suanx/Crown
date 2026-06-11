@@ -1,6 +1,5 @@
 import { memo } from "react";
 import type { Message } from "@/api";
-import { ProviderIcon } from "@/shared/ui/ProviderIcon";
 import { cn } from "@/shared/lib/cn";
 import { ReasoningBlock } from "./ReasoningBlock";
 import { ToolGroup } from "./ToolGroup";
@@ -8,11 +7,10 @@ import { MarkdownRenderer } from "./MarkdownRenderer";
 import { MessageMeta } from "./MessageMeta";
 import { groupSegments } from "./groupSegments";
 import { Icon } from "@/shared/icons/Icon";
-import { CopyIcon } from "@/shared/icons/set";
+import { CopyIcon, ReasoningIcon } from "@/shared/icons/set";
 
 interface AssistantMessageProps {
   message: Message;
-  providerId?: string;
   /** 是否是当前 turn 正在输出的最后一条 assistant message */
   isActive?: boolean;
 }
@@ -30,7 +28,6 @@ interface AssistantMessageProps {
  */
 function AssistantMessageImpl({
   message,
-  providerId = "generic",
   isActive,
 }: AssistantMessageProps) {
   // 头像呼吸灯:只在当前正在工作的那条(最后一条 streaming assistant)
@@ -58,7 +55,7 @@ function AssistantMessageImpl({
               shouldPulse && "animate-pulse-soft transition-transform",
             )}
           >
-            <ProviderIcon providerId={providerId} name={providerId} size={15} />
+            <Icon icon={ReasoningIcon} size={15} weight="duotone" className="text-brand" />
           </div>
         )}
       </div>

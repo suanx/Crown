@@ -836,6 +836,11 @@ export interface AppConfig {
     timeoutSecs: number;
     maxOutputBytes: number;
   };
+  subagent: {
+    maxSubtasks: number;
+    model: string;
+  };
+
 }
 
 // ┌─────────────────────────────────────────────────────────────────────────┐
@@ -934,6 +939,11 @@ export interface ConfigPatch {
   budget?: AppConfig["budget"];
   compaction?: AppConfig["compaction"];
   shell?: AppConfig["shell"];
+  subagent?: {
+    maxSubtasks: number;
+    model: string;
+  };
+
 }
 
 // ┌─────────────────────────────────────────────────────────────────────────┐
