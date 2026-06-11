@@ -10,6 +10,7 @@ import {
   RefreshIcon,
   McpIcon,
   TrashIcon,
+  EditIcon,
   CloseIcon,
   SpinnerIcon,
   CaretDownIcon,
@@ -22,7 +23,7 @@ import { cn } from "@/shared/lib/cn";
  * MCP 服务器面板 — 连真后端 (deepseek-mcp / rmcp).
  *
  * - 列表 + 状态徽章来自 `listMcpServers`
- * - 添加: 粘贴标准 MCP 配置 JSON → `mcpAddServer` (写 mcp.json + 热重载)
+ * - 添加/编辑: 结构化表单 → `mcpAddServer` (写 mcp.json + 热重载)
  * - 启用/禁用: `toggleMcpServer`; 删除: `mcpRemoveServer`; 重连: `restartMcpServer`
  * - 全部重载: `mcpReload`
  * - 实时状态: 订阅 `onMcpServerStatusChanged` / `onMcpToolsChanged`,无需轮询
@@ -32,6 +33,7 @@ export function McpPanel() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const [editingServer, setEditingServer] = useState<McpServer | null>(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -117,6 +119,7 @@ export function McpPanel() {
             onRemove={() =>
               void runAction(s.name, () => agentClient.mcpRemoveServer(s.name))
             }
+            onEdit={() => setEditingServer(s)}
           />
         ))}
       </div>
@@ -136,12 +139,31 @@ export function McpPanel() {
         </div>
       )}
 
-      <AddServerDialog
+      {/* 添加对话框 */}
+      <AddEditServerDialog
         open={addOpen}
+        editingServer={null}
         onClose={() => setAddOpen(false)}
-        onAdd={async (name, config) => {
+        onSave={async (name, config) => {
           await agentClient.mcpAddServer(name, config);
           setAddOpen(false);
+          await refresh();
+        }}
+      />
+
+      {/* 编辑对话框 */}
+      <AddEditServerDialog
+        open={editingServer !== null}
+        editingServer={editingServer}
+        onClose={() => setEditingServer(null)}
+        onSave={async (name, config) => {
+          if (editingServer && name !== editingServer.name) {
+            // 改名时先删旧服务器再加新配置
+            await agentClient.mcpRemoveServer(editingServer.name);
+          }
+          // 同名时 mcpAddServer 直接覆盖写 mcp.json
+          await agentClient.mcpAddServer(name, config);
+          setEditingServer(null);
           await refresh();
         }}
       />
@@ -155,12 +177,14 @@ function ServerCard({
   onToggle,
   onRestart,
   onRemove,
+  onEdit,
 }: {
   server: McpServer;
   busy: boolean;
   onToggle: (enabled: boolean) => void;
   onRestart: () => void;
   onRemove: () => void;
+  onEdit: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [tools, setTools] = useState<McpToolInfo[] | null>(null);
@@ -176,6 +200,8 @@ function ServerCard({
       }).catch(() => setLoadingTools(false));
     }
   }, [expanded, tools, loadingTools, server.name, server.status, server.toolCount]);
+
+  const isHttp = server.command?.startsWith("http://") || server.command?.startsWith("https://");
 
   return (
     <div
@@ -235,7 +261,11 @@ function ServerCard({
               )}
             </div>
             <div className="text-xs font-mono text-text-tertiary mt-1 truncate">
-              {server.command} {server.args.join(" ")}
+              {isHttp ? (
+                <span>{server.command}</span>
+              ) : (
+                <span>{server.command} {server.args.join(" ")}</span>
+              )}
             </div>
             {server.errorMessage && (
               <div className="mt-2 text-xs text-danger break-all">
@@ -248,11 +278,11 @@ function ServerCard({
             <Button
               variant="ghost"
               size="sm"
-              icon={busy ? SpinnerIcon : RefreshIcon}
+              icon={EditIcon}
               disabled={busy}
-              onClick={onRestart}
+              onClick={onEdit}
             >
-              重连
+              编辑
             </Button>
             <Button
               variant="ghost"
@@ -260,8 +290,18 @@ function ServerCard({
               icon={TrashIcon}
               disabled={busy}
               onClick={onRemove}
-              aria-label={`删除 ${server.name}`}
-            />
+            >
+              删除
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={busy ? SpinnerIcon : RefreshIcon}
+              disabled={busy}
+              onClick={onRestart}
+            >
+              重连
+            </Button>
             <Toggle
               checked={server.enabled}
               disabled={busy}
@@ -333,51 +373,91 @@ function ServerCard({
 }
 
 
-/** 添加服务器对话框 — 粘贴标准 MCP 配置 JSON。 */
-function AddServerDialog({
+/** 添加/编辑服务器对话框 — 结构化表单。 */
+function AddEditServerDialog({
   open,
+  editingServer,
   onClose,
-  onAdd,
+  onSave,
 }: {
   open: boolean;
+  editingServer: McpServer | null;
   onClose: () => void;
-  onAdd: (name: string, config: unknown) => Promise<void>;
+  onSave: (name: string, config: unknown) => Promise<void>;
 }) {
-  const placeholder = `{
-  "command": "npx",
-  "args": ["-y", "@modelcontextprotocol/server-everything"]
-}`;
   const [name, setName] = useState("");
-  const [json, setJson] = useState(placeholder);
+  const [type, setType] = useState<"stdio" | "http">("stdio");
+  const [command, setCommand] = useState("");
+  const [argsText, setArgsText] = useState("");
+  const [url, setUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  // 打开时初始化表单
   useEffect(() => {
     if (open) {
-      setName("");
-      setJson(placeholder);
+      if (editingServer) {
+        setName(editingServer.name);
+        const isHttp =
+          editingServer.command?.startsWith("http://") ||
+          editingServer.command?.startsWith("https://");
+        if (isHttp) {
+          setType("http");
+          setUrl(editingServer.command);
+          setCommand("");
+          setArgsText("");
+        } else {
+          setType("stdio");
+          setCommand(editingServer.command || "");
+          setArgsText(editingServer.args.join("\n"));
+          setUrl("");
+        }
+      } else {
+        setName("");
+        setType("stdio");
+        setCommand("");
+        setArgsText("");
+        setUrl("");
+      }
       setError(null);
+      setSubmitting(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }, [open, editingServer]);
 
   async function submit() {
     setError(null);
-    const trimmed = name.trim();
-    if (!trimmed) {
+    const trimmedName = name.trim();
+    if (!trimmedName) {
       setError("请填写服务器名称");
       return;
     }
+
     let config: unknown;
-    try {
-      config = JSON.parse(json);
-    } catch (e) {
-      setError(`配置不是合法 JSON: ${e instanceof Error ? e.message : e}`);
-      return;
+    if (type === "http") {
+      const trimmedUrl = url.trim();
+      if (!trimmedUrl) {
+        setError("请填写 URL");
+        return;
+      }
+      config = { type: "http", url: trimmedUrl };
+    } else {
+      const trimmedCmd = command.trim();
+      if (!trimmedCmd) {
+        setError("请填写命令 (command)");
+        return;
+      }
+      // 按行分割 args，过滤空行
+      const args = argsText
+        .split("\n")
+        .map((a) => a.trim())
+        .filter((a) => a.length > 0);
+      config = { command: trimmedCmd, args };
     }
+
     setSubmitting(true);
     try {
-      await onAdd(trimmed, config);
+      await onSave(trimmedName, config);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -385,21 +465,31 @@ function AddServerDialog({
     }
   }
 
+  const isEditing = editingServer !== null;
+
   return (
-    <Dialog open={open} onClose={onClose} className="max-w-lg">
+    <Dialog
+      open={open}
+      onClose={onClose}
+      className="max-w-lg"
+      modal={submitting}
+    >
       <div className="flex items-center justify-between px-5 h-12 border-b border-border-subtle">
         <span className="text-sm font-semibold text-text-primary">
-          添加 MCP 服务器
+          {isEditing ? "编辑 MCP 服务器" : "添加 MCP 服务器"}
         </span>
         <button
           onClick={onClose}
           className="text-text-tertiary hover:text-text-primary focus-ring rounded"
           aria-label="关闭"
+          disabled={submitting}
         >
           <Icon icon={CloseIcon} size={16} />
         </button>
       </div>
+
       <div className="p-5 space-y-4">
+        {/* 服务器名称 */}
         <div>
           <label className="text-xs text-text-secondary mb-1.5 block">
             服务器名称
@@ -408,31 +498,155 @@ function AddServerDialog({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="例如 everything"
+            disabled={submitting}
             className={cn(
               "h-9 w-full px-3 rounded-md text-sm bg-input-bg text-text-primary",
               "border border-border-default placeholder:text-text-tertiary",
               "outline-none focus:border-border-focus transition-colors",
+              submitting && "opacity-50 cursor-not-allowed",
             )}
           />
         </div>
+
+        {/* 类型选择 */}
         <div>
           <label className="text-xs text-text-secondary mb-1.5 block">
-            配置 JSON (stdio: command/args; 或 {`{"type":"http","url":"..."}`})
+            连接类型
           </label>
-          <textarea
-            value={json}
-            onChange={(e) => setJson(e.target.value)}
-            rows={6}
-            spellCheck={false}
-            className={cn(
-              "w-full px-3 py-2 rounded-md text-xs font-mono bg-input-bg text-text-primary",
-              "border border-border-default placeholder:text-text-tertiary",
-              "outline-none focus:border-border-focus transition-colors resize-y",
-            )}
-          />
+          <div className="flex gap-3">
+            <label
+              className={cn(
+                "flex items-center gap-2 px-3 h-9 rounded-md text-sm cursor-pointer transition-colors border",
+                type === "stdio"
+                  ? "border-brand bg-brand/10 text-text-primary"
+                  : "border-border-default bg-input-bg text-text-secondary hover:border-border-focus",
+                submitting && "opacity-50 cursor-not-allowed",
+              )}
+            >
+              <input
+                type="radio"
+                name="mcp-type"
+                value="stdio"
+                checked={type === "stdio"}
+                onChange={() => setType("stdio")}
+                disabled={submitting}
+                className="sr-only"
+              />
+              <span
+                className={cn(
+                  "w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0",
+                  type === "stdio"
+                    ? "border-brand"
+                    : "border-border-default",
+                )}
+              >
+                {type === "stdio" && (
+                  <span className="w-2 h-2 rounded-full bg-brand" />
+                )}
+              </span>
+              stdio (本地命令)
+            </label>
+            <label
+              className={cn(
+                "flex items-center gap-2 px-3 h-9 rounded-md text-sm cursor-pointer transition-colors border",
+                type === "http"
+                  ? "border-brand bg-brand/10 text-text-primary"
+                  : "border-border-default bg-input-bg text-text-secondary hover:border-border-focus",
+                submitting && "opacity-50 cursor-not-allowed",
+              )}
+            >
+              <input
+                type="radio"
+                name="mcp-type"
+                value="http"
+                checked={type === "http"}
+                onChange={() => setType("http")}
+                disabled={submitting}
+                className="sr-only"
+              />
+              <span
+                className={cn(
+                  "w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0",
+                  type === "http"
+                    ? "border-brand"
+                    : "border-border-default",
+                )}
+              >
+                {type === "http" && (
+                  <span className="w-2 h-2 rounded-full bg-brand" />
+                )}
+              </span>
+              HTTP (远程)
+            </label>
+          </div>
         </div>
+
+        {/* stdio 字段: command + args */}
+        {type === "stdio" && (
+          <>
+            <div>
+              <label className="text-xs text-text-secondary mb-1.5 block">
+                命令 (command)
+              </label>
+              <input
+                value={command}
+                onChange={(e) => setCommand(e.target.value)}
+                placeholder="例如 npx"
+                disabled={submitting}
+                className={cn(
+                  "h-9 w-full px-3 rounded-md text-sm bg-input-bg text-text-primary",
+                  "border border-border-default placeholder:text-text-tertiary",
+                  "outline-none focus:border-border-focus transition-colors",
+                  submitting && "opacity-50 cursor-not-allowed",
+                )}
+              />
+            </div>
+            <div>
+              <label className="text-xs text-text-secondary mb-1.5 block">
+                参数 (args) — 每行一个
+              </label>
+              <textarea
+                value={argsText}
+                onChange={(e) => setArgsText(e.target.value)}
+                placeholder={`-y\n@modelcontextprotocol/server-everything`}
+                rows={4}
+                spellCheck={false}
+                disabled={submitting}
+                className={cn(
+                  "w-full px-3 py-2 rounded-md text-xs font-mono bg-input-bg text-text-primary",
+                  "border border-border-default placeholder:text-text-tertiary",
+                  "outline-none focus:border-border-focus transition-colors resize-y",
+                  submitting && "opacity-50 cursor-not-allowed",
+                )}
+              />
+            </div>
+          </>
+        )}
+
+        {/* http 字段: url */}
+        {type === "http" && (
+          <div>
+            <label className="text-xs text-text-secondary mb-1.5 block">
+              URL
+            </label>
+            <input
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://example.com/mcp"
+              disabled={submitting}
+              className={cn(
+                "h-9 w-full px-3 rounded-md text-sm bg-input-bg text-text-primary",
+                "border border-border-default placeholder:text-text-tertiary",
+                "outline-none focus:border-border-focus transition-colors",
+                submitting && "opacity-50 cursor-not-allowed",
+              )}
+            />
+          </div>
+        )}
+
         {error && <div className="text-xs text-danger break-all">{error}</div>}
       </div>
+
       <div className="flex items-center justify-end gap-2 px-5 h-14 border-t border-border-subtle">
         <Button variant="ghost" onClick={onClose} disabled={submitting}>
           取消
@@ -443,7 +657,7 @@ function AddServerDialog({
           disabled={submitting}
           icon={submitting ? SpinnerIcon : PlusIcon}
         >
-          添加并连接
+          {isEditing ? "保存修改" : "添加并连接"}
         </Button>
       </div>
     </Dialog>

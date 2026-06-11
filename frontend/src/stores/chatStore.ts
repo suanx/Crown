@@ -64,7 +64,7 @@ import type {
   ContextUsageEvent,
 } from "@/api";
 import { useRouterStore } from "@/stores/routerStore";
-import { useBalanceStore } from "@/stores/balanceStore";
+
 import { useSessionStore } from "@/stores/sessionStore";
 import { isDefaultTitle } from "@/shared/lib/threadTitle";
 
@@ -1020,9 +1020,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     if (!didApply) return;
 
-    // ── side effects (outside the reducer) ──────────────────────────────
-    // P3a: turn 完后余额刚被扣完,异步刷新最新余额. balanceStore 自处理失败.
-    void useBalanceStore.getState().reload();
+
     // 自动标题持久化 + 刷新 sidebar (本地缓存已在 set 内更新).
     if (autoTitleToPersist) {
       void agentClient

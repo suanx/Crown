@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { agentClient, type FsEntry, type FsFile } from "@/api";
+import { agentClient, type FsEntry, type FsFile, type GrepMatch } from "@/api";
 import { useActiveThread } from "@/stores/chatStore";
 import { Icon } from "@/shared/icons/Icon";
 import {
@@ -8,6 +8,9 @@ import {
   FileIcon,
   FolderIcon,
   RefreshIcon,
+  SearchIcon,
+  FileSearchIcon,
+  CloseIcon,
 } from "@/shared/icons/set";
 import { cn } from "@/shared/lib/cn";
 import { PanelHeader } from "../PanelHeader";
@@ -31,6 +34,29 @@ export function FilesView({ slot }: FilesViewProps) {
   const [preview, setPreview] = useState<FsFile | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<GrepMatch[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+
+  async function handleSearch() {
+    const q = searchQuery.trim();
+    if (!q || !root) return;
+    setSearching(true);
+    setShowSearch(true);
+    try {
+      const results = await agentClient.fsGrep(q, root, undefined, 100);
+      setSearchResults(results);
+    } catch { setSearchResults([]); }
+    finally { setSearching(false); }
+  }
+
+  function clearSearch() {
+    setSearchQuery("");
+    setSearchResults([]);
+    setShowSearch(false);
+  }
+
 
   const loadDirectory = useCallback(async (path: string, force = false) => {
     setDirectories((prev) => {
@@ -127,32 +153,48 @@ export function FilesView({ slot }: FilesViewProps) {
       <PanelHeader slot={slot} kind="files" />
       <div className={cn("flex-1 min-h-0", slot === "bottom" ? "flex" : "flex flex-col")}>
         <div className={cn("min-h-0 scrollable px-2 py-2 text-sm", slot === "bottom" ? "w-80 border-r border-border-subtle" : "flex-1")}>
-          <div className="mb-2 flex items-center gap-2 px-2 text-[11px] text-text-tertiary">
-            <span className="min-w-0 flex-1 truncate">{root ?? "未进入项目"}</span>
-            <button
-              type="button"
-              onClick={refreshRoot}
-              disabled={!root}
-              className="grid size-6 place-items-center rounded-md text-text-tertiary transition-colors hover:bg-hover hover:text-text-primary disabled:opacity-40"
-              aria-label="刷新文件树"
-            >
-              <Icon icon={RefreshIcon} size={13} />
-            </button>
+          {/* Search bar */}
+          <div className="flex items-center gap-1 px-2 pb-1.5 mb-1 border-b border-border-subtle">
+            <Icon icon={SearchIcon} size={11} className="text-text-tertiary shrink-0" />
+            <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") void handleSearch(); }}
+              placeholder="搜索文件内容..." className="flex-1 bg-transparent text-[11px] text-text-primary placeholder:text-text-tertiary outline-none" />
+            {searchQuery && <button onClick={clearSearch} className="text-text-tertiary hover:text-text-primary"><Icon icon={CloseIcon} size={10} /></button>}
+            <button onClick={() => void handleSearch()} disabled={!searchQuery.trim() || searching} className="text-[10px] text-text-tertiary hover:text-text-primary disabled:opacity-40 shrink-0">{searching ? "..." : "搜"}</button>
           </div>
-          {root ? (
-            <DirectoryTree
-              name={rootName}
-              path={root}
-              depth={0}
-              directory={directories[root]}
-              openPaths={openPaths}
-              directories={directories}
-              selectedPath={selected?.path ?? null}
-              onToggle={toggleDirectory}
-              onOpenFile={openFile}
-            />
+
+          {showSearch ? (
+            <div className="flex-1">
+              {searchResults.length === 0 && !searching && <div className="p-3 text-center text-[11px] text-text-tertiary">无匹配</div>}
+              {searchResults.map((r, i) => (
+                <button key={i} onClick={() => { setSelected({ name: r.path.split(/[\\/]/).pop() || "", path: r.path, isDir: false, size: 0, modifiedMs: 0 }); void openFile({ name: r.path.split(/[\\/]/).pop() || "", path: r.path, isDir: false, size: 0, modifiedMs: 0 }); }}
+                  className="w-full text-left px-2 py-1 hover:bg-hover transition-colors rounded">
+                  <div className="flex items-center gap-1 text-[11px]">
+                    <Icon icon={FileSearchIcon} size={10} className="text-text-tertiary shrink-0" />
+                    <span className="text-text-primary truncate font-mono">{r.path.split(/[\\/]/).pop()}</span>
+                    <span className="text-text-tertiary shrink-0">:{r.lineNumber}</span>
+                  </div>
+                  <div className="text-[10px] text-text-tertiary truncate mt-0.5 pl-4 font-mono">{r.line}</div>
+                </button>
+              ))}
+              <button onClick={clearSearch} className="w-full text-center text-[10px] text-text-tertiary py-2 hover:text-text-primary">清除搜索</button>
+            </div>
           ) : (
-            <EmptyState text="在项目中打开对话后查看文件" />
+            <>
+              <div className="mb-2 flex items-center gap-2 px-2 text-[11px] text-text-tertiary">
+                <span className="min-w-0 flex-1 truncate">{root ?? "未进入项目"}</span>
+                <button type="button" onClick={refreshRoot} disabled={!root} className="grid size-6 place-items-center rounded-md text-text-tertiary transition-colors hover:bg-hover hover:text-text-primary disabled:opacity-40" aria-label="刷新文件树">
+                  <Icon icon={RefreshIcon} size={13} />
+                </button>
+              </div>
+              {root ? (
+                <DirectoryTree name={rootName} path={root} depth={0} directory={directories[root]}
+                  openPaths={openPaths} directories={directories} selectedPath={selected?.path ?? null}
+                  onToggle={toggleDirectory} onOpenFile={openFile} />
+              ) : (
+                <EmptyState text="在项目中打开对话后查看文件" />
+              )}
+            </>
           )}
         </div>
         <FilePreview

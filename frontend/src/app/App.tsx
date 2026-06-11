@@ -5,7 +5,7 @@ import { useWorkspaceStore } from "@/stores/workspaceStore";
 import { useSessionStore } from "@/stores/sessionStore";
 import { useProjectStore } from "@/stores/projectStore";
 import { useChatStore } from "@/stores/chatStore";
-import { useBalanceStore } from "@/stores/balanceStore";
+
 import { useSettingsStore } from "@/stores/settingsStore";
 import { useTauriEvents } from "@/hooks/useTauriEvents";
 import { AppShell } from "./AppShell";
@@ -33,7 +33,7 @@ export function App() {
   useEffect(() => {
     void loadThreads();
     void loadProjects();
-    void useBalanceStore.getState().reload();
+
     void useSettingsStore
       .getState()
       .load()
