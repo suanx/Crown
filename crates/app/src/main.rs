@@ -165,6 +165,22 @@ fn main() {
                 .ensure_data_root()
                 .expect("create crown data root");
 
+            // Install bundled skills (from bundled-skills/) into data dir on first run.
+            let skill_target = crown_paths.skills_dir();
+            let bundled = std::path::Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/bundled-skills"));
+            if bundled.is_dir() {
+                if let Ok(entries) = std::fs::read_dir(bundled) {
+                    for entry in entries.flatten() {
+                        let name = entry.file_name();
+                        let target = skill_target.join(&name);
+                        if !target.is_dir() {
+                            copy_dir(entry.path(), target).ok();
+                        }
+                    }
+                }
+            }
+
+
             let db = Arc::new(
                 Database::open(crown_paths.db_path()).expect("open state.db"),
             );
@@ -427,4 +443,22 @@ fn main() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+
+
+/// Recursively copy a directory. Used to install bundled skills on first run.
+fn copy_dir(src: std::path::PathBuf, dst: std::path::PathBuf) -> std::io::Result<()> {
+    std::fs::create_dir_all(&dst)?;
+    for entry in std::fs::read_dir(src)? {
+        let entry = entry?;
+        let ty = entry.file_type()?;
+        let target = dst.join(entry.file_name());
+        if ty.is_dir() {
+            copy_dir(entry.path(), target)?;
+        } else {
+            std::fs::copy(entry.path(), target)?;
+        }
+    }
+    Ok(())
 }
