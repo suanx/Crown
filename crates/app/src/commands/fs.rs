@@ -5,8 +5,9 @@
 //! 目录只做单层读取，前端展开到哪一层才加载哪一层，避免大仓库递归扫描。
 
 use std::path::{Path, PathBuf};
-
 use serde::Serialize;
+use grep_searcher::sinks::UTF8;
+
 
 /// 文件树里的单个目录项。
 #[derive(Debug, Clone, Serialize)]
@@ -161,4 +162,210 @@ fn read_blocking(path: &Path, cap: u64) -> Result<FsFileDto, String> {
         size,
         is_binary: false,
     })
+}
+
+// ── Grep: 在文件中搜索内容 ─────────────────────────────────────────────────
+
+/// Search file contents in the workspace using a regex pattern.
+/// Returns matching lines with line numbers and file paths.
+#[tauri::command]
+pub async fn fs_grep(
+    pattern: String,
+    path: Option<String>,
+    glob: Option<String>,
+    max_results: Option<usize>,
+) -> Result<Vec<GrepMatchDto>, String> {
+    let root = path.map(PathBuf::from).unwrap_or_else(|| std::env::current_dir().unwrap_or_default());
+    let max_res = max_results.unwrap_or(100);
+    let results = std::sync::Mutex::new(Vec::new());
+    let max_file_size: u64 = 5 * 1024 * 1024;
+
+    let matcher = grep_regex::RegexMatcher::new(&pattern).map_err(|e| format!("invalid regex: {e}"))?;
+
+    let mut searcher = grep_searcher::SearcherBuilder::new()
+        .line_number(true)
+        .build();
+
+    let mut walk = ignore::WalkBuilder::new(&root)
+        .git_global(true)
+        .git_ignore(true)
+        .git_exclude(true)
+        .add_custom_ignore_filename(".gitignore")
+        .filter_entry(move |entry| {
+            let name = entry.file_name().to_string_lossy();
+            // Skip VCS and dependency dirs
+            !matches!(name.as_ref(), ".git" | ".svn" | ".hg" | "node_modules" | "target")
+        })
+        .build();
+
+    for entry in walk.flatten() {
+        if results.lock().unwrap().len() >= max_res {
+            break;
+        }
+        let ft = match entry.file_type() {
+            Some(ft) => ft,
+            None => continue,
+        };
+        if ft.is_dir() || ft.is_symlink() {
+            continue;
+        }
+        let file_path = entry.path();
+        // Apply file glob filter if provided
+        if let Some(ref g) = glob {
+            let g = globset::Glob::new(g).map_err(|e| format!("invalid glob: {e}"))?;
+            if !g.compile_matcher().is_match(file_path) {
+                continue;
+            }
+        }
+        // Skip large files
+        if std::fs::metadata(file_path).map(|m| m.len()).unwrap_or(0) > max_file_size {
+            continue;
+        }
+        if std::fs::metadata(file_path).map(|m| m.len()).unwrap_or(0) == 0 {
+            continue;
+        }
+
+        let path_for_closure = file_path.to_path_buf();
+        let _ = searcher.search_path(
+            &matcher,
+            &file_path,
+            UTF8(|lnum, line| {
+                let mut res = results.lock().unwrap();
+                if res.len() < max_res {
+                    res.push(GrepMatchDto {
+                        path: path_for_closure.to_string_lossy().into_owned(),
+                        line_number: lnum,
+                        line: line.to_string(),
+                    });
+                }
+                Ok(true)
+            }),
+        );
+    }
+
+    Ok(results.into_inner().unwrap())
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GrepMatchDto {
+    pub path: String,
+    pub line_number: u64,
+    pub line: String,
+}
+
+// ── Glob: 按名称模式查找文件 ──────────────────────────────────────────────
+
+/// Find files by name pattern (glob).
+#[tauri::command]
+pub async fn fs_glob(
+    pattern: String,
+    path: Option<String>,
+    max_results: Option<usize>,
+) -> Result<Vec<FsEntryDto>, String> {
+    let root = path.map(PathBuf::from).unwrap_or_else(|| std::env::current_dir().unwrap_or_default());
+    let max_res = max_results.unwrap_or(200);
+    let results = std::sync::Mutex::new(Vec::new());
+    let glob = globset::Glob::new(&pattern).map_err(|e| format!("invalid glob: {e}"))?;
+    let matcher = glob.compile_matcher();
+
+    let walk = ignore::WalkBuilder::new(&root)
+        .git_global(true)
+        .git_ignore(true)
+        .git_exclude(true)
+        .filter_entry(move |entry| {
+            let name = entry.file_name().to_string_lossy();
+            !matches!(name.as_ref(), ".git" | ".svn" | ".hg" | "node_modules" | "target")
+        })
+        .build();
+
+    for entry in walk.flatten() {
+        if results.lock().unwrap().len() >= max_res {
+            break;
+        }
+        let ft = match entry.file_type() {
+            Some(ft) => ft,
+            None => continue,
+        };
+        if ft.is_dir() {
+            continue;
+        }
+        let file_path = entry.path();
+        if !matcher.is_match(file_path) {
+            continue;
+        }
+        let meta = std::fs::metadata(file_path).ok();
+        let size = meta.as_ref().map(|m| m.len()).unwrap_or(0);
+        let modified_ms = meta.and_then(|m| m.modified().ok())
+            .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+            .map(|d| d.as_millis() as i64)
+            .unwrap_or(0);
+        results.lock().unwrap().push(FsEntryDto {
+            name: file_path.file_name().unwrap_or_default().to_string_lossy().into_owned(),
+            path: file_path.to_string_lossy().into_owned(),
+            is_dir: false,
+            size,
+            modified_ms,
+        });
+    }
+
+    Ok(results.into_inner().unwrap())
+}
+
+// ── Search Messages: 在对话历史中搜索消息内容 ─────────────────────────────
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MessageSearchResultDto {
+    pub thread_id: String,
+    pub thread_title: String,
+    pub message_id: String,
+    pub role: String,
+    pub content_preview: String,
+    pub seq: i64,
+    pub created_at: i64,
+}
+
+/// Search the content of all messages across threads.
+/// Searches the `content` field of the JSON-stored messages.
+#[tauri::command]
+pub async fn search_messages(
+    state: tauri::State<'_, crate::AppState>,
+    query: String,
+    max_results: Option<usize>,
+) -> Result<Vec<MessageSearchResultDto>, String> {
+    let max_res = max_results.unwrap_or(50);
+    let conn = state.db.conn();
+
+    let pattern = format!("%{}%", query.replace('%', "\\%").replace('_', "\\_"));
+
+    let mut stmt = conn.prepare(
+        "SELECT m.thread_id, COALESCE(t.name, ''), m.id, m.role, m.content_json, m.seq, m.created_at
+         FROM messages m
+         JOIN threads t ON t.id = m.thread_id
+         WHERE m.content_json LIKE ?1 ESCAPE '\\'
+         ORDER BY m.created_at DESC
+         LIMIT ?2"
+    ).map_err(|e| e.to_string())?;
+
+    let rows = stmt.query_map(
+        rusqlite::params![pattern, max_res as i64],
+        |r| {
+            Ok(MessageSearchResultDto {
+                thread_id: r.get(0)?,
+                thread_title: r.get(1)?,
+                message_id: r.get(2)?,
+                role: r.get(3)?,
+                content_preview: r.get::<_, String>(4)?.chars().take(200).collect(),
+                seq: r.get(5)?,
+                created_at: r.get(6)?,
+            })
+        },
+    ).map_err(|e| e.to_string())?;
+
+    let mut out = Vec::new();
+    for row in rows {
+        out.push(row.map_err(|e| e.to_string())?);
+    }
+    Ok(out)
 }

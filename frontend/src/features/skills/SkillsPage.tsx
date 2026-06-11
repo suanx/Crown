@@ -10,6 +10,7 @@ import {
   CloseIcon,
   SpinnerIcon,
   SkillIcon,
+  TrashIcon,
 } from "@/shared/icons/set";
 import { Button } from "@/shared/ui/Button";
 import { Pill } from "@/shared/ui/Pill";
@@ -63,6 +64,19 @@ export function SkillsPage() {
       setReloading(false);
     }
   }
+
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  async function handleDelete(name: string) {
+    setDeleting(name);
+    try {
+      await agentClient.skillDelete(name);
+      await refresh();
+    } finally {
+      setDeleting(null);
+    }
+  }
+
 
   const filtered = useMemo(
     () => skills.filter((s) => filter === "all" || s.scope === filter),
@@ -123,7 +137,9 @@ export function SkillsPage() {
             <SkillCard
               key={`${s.scope}:${s.name}`}
               skill={s}
+              deleting={deleting === s.name}
               onPreview={() => setPreview(s)}
+              onDelete={() => void handleDelete(s.name)}
             />
           ))}
         </div>
@@ -163,55 +179,54 @@ function scopeMeta(scope: SkillScope) {
     ? { icon: GlobeIcon, label: "全局" }
     : { icon: FolderIcon, label: "项目" };
 }
-
 function SkillCard({
   skill,
+  deleting,
   onPreview,
+  onDelete,
 }: {
   skill: Skill;
+  deleting: boolean;
   onPreview: () => void;
+  onDelete: () => void;
 }) {
   const meta = scopeMeta(skill.scope);
   return (
-    <button
-      onClick={onPreview}
-      className="w-full text-left rounded-lg border border-border-subtle bg-elevated p-4 hover:border-border-default transition-colors focus-ring"
-    >
-      <div className="flex items-start gap-3">
-        <div className="h-10 w-10 rounded-lg flex items-center justify-center shrink-0 bg-brand-soft text-brand">
-          <Icon icon={CodeIcon} size={18} weight="duotone" />
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-base font-semibold text-text-primary">
-              {skill.name}
-            </span>
-            <Pill tone="neutral" icon={meta.icon}>
-              {meta.label}
-            </Pill>
-            {skill.source === "claude" && (
-              <span className="text-xs text-text-tertiary">claude 兼容</span>
-            )}
+    <div className="relative rounded-lg border border-border-subtle bg-elevated hover:border-border-default transition-colors">
+      <button onClick={onPreview} className="w-full text-left p-4 focus-ring rounded-lg">
+        <div className="flex items-start gap-3">
+          <div className="h-10 w-10 rounded-lg flex items-center justify-center shrink-0 bg-brand-soft text-brand">
+            <Icon icon={CodeIcon} size={18} weight="duotone" />
           </div>
-          <div className="mt-1 text-sm text-text-secondary leading-relaxed line-clamp-2">
-            {skill.description}
-          </div>
-          {skill.allowedTools.length > 0 && (
-            <div className="mt-2 flex items-center gap-1 flex-wrap">
-              {skill.allowedTools.map((t) => (
-                <span
-                  key={t}
-                  className="text-xs text-text-tertiary px-2 h-5 inline-flex items-center rounded bg-canvas border border-border-subtle font-mono"
-                >
-                  {t}
-                </span>
-              ))}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-base font-semibold text-text-primary">{skill.name}</span>
+              <Pill tone="neutral" icon={meta.icon}>{meta.label}</Pill>
+              <Pill tone="info">{skill.source}</Pill>
             </div>
-          )}
+            <div className="mt-1 text-sm text-text-secondary leading-relaxed line-clamp-2">{skill.description}</div>
+            {skill.allowedTools.length > 0 && (
+              <div className="mt-2 flex items-center gap-1 flex-wrap">
+                {skill.allowedTools.map((t) => (
+                  <span key={t} className="text-xs text-text-tertiary px-2 h-5 inline-flex items-center rounded bg-canvas border border-border-subtle font-mono">{t}</span>
+                ))}
+              </div>
+            )}
+            <div className="mt-2 text-xs text-text-tertiary font-mono truncate">{skill.path}</div>
+            <div className="mt-1 text-xs text-text-tertiary">在对话中输入 /{skill.name} 使用该技能</div>
+          </div>
         </div>
-      </div>
-    </button>
+      </button>
+      <button
+        onClick={onDelete}
+        disabled={deleting}
+        className="absolute top-3 right-3 h-7 w-7 rounded-md flex items-center justify-center text-text-tertiary hover:text-danger hover:bg-danger/10 transition-colors focus-ring"
+        title="删除技能"
+        aria-label="删除技能"
+      >
+        {deleting ? <Icon icon={SpinnerIcon} size={12} className="animate-spin" /> : <Icon icon={TrashIcon} size={12} />}
+      </button>
+    </div>
   );
 }
 

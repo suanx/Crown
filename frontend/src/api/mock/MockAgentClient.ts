@@ -33,6 +33,8 @@ import type {
   GetUserBalanceInput,
   FsEntry,
   FsFile,
+  GrepMatch,
+  MessageSearchResult,
   HookConfigFile,
   HookEventInfo,
   HookTraceEntry,
@@ -461,6 +463,7 @@ export class MockAgentClient implements AgentClient {
     return MOCK_SKILLS.length;
   }
 
+  async skillDelete(_name: string): Promise<void> { return; }
   // ── Output Styles (Phase 2) ───────────────────────────────────────────────
   async listOutputStyles(): Promise<OutputStyle[]> {
     await delay();
@@ -556,6 +559,19 @@ export class MockAgentClient implements AgentClient {
       size: content.length,
       isBinary: false,
     };
+  }
+  async fsGrep(_pattern: string, _path?: string, _glob?: string, _maxResults?: number): Promise<GrepMatch[]> {
+    return [];
+  }
+
+  async fsGlob(_pattern: string, _path?: string, _maxResults?: number): Promise<FsEntry[]> {
+    await delay();
+    return [];
+  }
+
+  async searchMessages(_query: string, _maxResults?: number): Promise<MessageSearchResult[]> {
+    await delay();
+    return [];
   }
 
   async ptySpawn(_input: PtySpawnInput): Promise<string> {

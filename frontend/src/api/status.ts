@@ -102,6 +102,7 @@ export const CONTRACT_STATUS: Record<EndpointKey, ContractStatus> = {
   skillList: "connected",
   skillRead: "connected",
   skillReload: "connected",
+  skillDelete: "connected",
   // Output Styles (Phase 2) — 后端 output_styles 命令真实现.
   listOutputStyles: "connected",
   readOutputStyle: "connected",
@@ -121,6 +122,9 @@ export const CONTRACT_STATUS: Record<EndpointKey, ContractStatus> = {
   fsGetWorkspaceRoot: "connected",
   fsListDirectory: "connected",
   fsReadFile: "connected",
+  fsGrep: "connected",
+  fsGlob: "connected",
+  searchMessages: "connected",
   // 终端 PTY — 后端 portable-pty 真实会话 + pty:data/pty:exit 事件。
   ptyList: "connected",
   ptySnapshot: "connected",

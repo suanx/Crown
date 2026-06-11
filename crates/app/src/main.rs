@@ -412,6 +412,9 @@ fn main() {
             commands::fs_get_workspace_root,
             commands::fs_list_directory,
             commands::fs_read_file,
+            commands::fs_grep,
+            commands::fs_glob,
+            commands::search_messages,
             // 终端 PTY
             commands::pty_list,
             commands::pty_snapshot,

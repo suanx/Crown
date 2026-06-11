@@ -32,6 +32,8 @@ import type {
   GetUserBalanceInput,
   FsEntry,
   FsFile,
+  GrepMatch,
+  MessageSearchResult,
   HookConfigFile,
   HookEventInfo,
   HookTraceEntry,
@@ -462,6 +464,11 @@ export class HybridClient implements AgentClient {
     this.invokeCmd("skillReload", () => this.tauri.skillReload(threadId), () =>
       this.mock.skillReload(threadId),
     );
+  skillDelete = (name: string): Promise<void> =>
+    this.invokeCmd("skillDelete", () => this.tauri.skillDelete(name), () =>
+      this.mock.skillDelete(name),
+    );
+
 
   listOutputStyles = (): Promise<OutputStyle[]> =>
     this.invokeCmd(
@@ -560,6 +567,27 @@ export class HybridClient implements AgentClient {
       "fsReadFile",
       () => this.tauri.fsReadFile(path, maxBytes),
       () => this.mock.fsReadFile(path, maxBytes),
+    );
+
+  fsGrep = (pattern: string, path?: string, glob?: string, maxResults?: number): Promise<GrepMatch[]> =>
+    this.invokeCmd(
+      "fsGrep",
+      () => this.tauri.fsGrep(pattern, path, glob, maxResults),
+      () => this.mock.fsGrep(pattern, path, glob, maxResults),
+    );
+
+  fsGlob = (pattern: string, path?: string, maxResults?: number): Promise<FsEntry[]> =>
+    this.invokeCmd(
+      "fsGlob",
+      () => this.tauri.fsGlob(pattern, path, maxResults),
+      () => this.mock.fsGlob(pattern, path, maxResults),
+    );
+
+  searchMessages = (query: string, maxResults?: number): Promise<MessageSearchResult[]> =>
+    this.invokeCmd(
+      "searchMessages",
+      () => this.tauri.searchMessages(query, maxResults),
+      () => this.mock.searchMessages(query, maxResults),
     );
 
   ptySpawn = (input: PtySpawnInput): Promise<string> =>

@@ -24,6 +24,13 @@ deepseek-tools = { path = "../tools" }
 dirs.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+grep-regex.workspace = true
+grep-searcher.workspace = true
+rusqlite.workspace = true
+
+globset.workspace = true
+ignore.workspace = true
+
 rfd = "0.15"
 portable-pty = "0.8"
 reqwest.workspace = true

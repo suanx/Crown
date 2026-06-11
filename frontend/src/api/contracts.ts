@@ -514,6 +514,23 @@ export interface FsFile {
   isBinary: boolean;
 }
 
+export interface GrepMatch {
+  path: string;
+  lineNumber: number;
+  line: string;
+}
+
+export interface MessageSearchResult {
+  threadId: string;
+  threadTitle: string;
+  messageId: string;
+  role: string;
+  contentPreview: string;
+  seq: number;
+  createdAt: number;
+}
+
+
 export interface PtySpawnInput {
   cwd?: string | null;
   cols: number;

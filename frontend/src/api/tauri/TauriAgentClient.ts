@@ -45,6 +45,8 @@ import type {
   GetUserBalanceInput,
   FsEntry,
   FsFile,
+  GrepMatch,
+  MessageSearchResult,
   HookConfigFile,
   HookEventInfo,
   HookTraceEntry,
@@ -318,6 +320,10 @@ export class TauriAgentClient implements AgentClient {
   skillReload(threadId?: string): Promise<number> {
     return invoke<number>("skill_reload", threadId ? { threadId } : {});
   }
+  skillDelete(name: string): Promise<void> {
+    return invoke<void>("skill_delete", { name });
+  }
+
 
   // ── Output Styles (Phase 2) ───────────────────────────────────────────────
   listOutputStyles(): Promise<OutputStyle[]> {
@@ -380,6 +386,15 @@ export class TauriAgentClient implements AgentClient {
   }
   fsReadFile(path: string, maxBytes?: number): Promise<FsFile> {
     return invoke<FsFile>("fs_read_file", { path, maxBytes });
+  }
+  fsGrep(pattern: string, path?: string, glob?: string, maxResults?: number): Promise<GrepMatch[]> {
+    return invoke<GrepMatch[]>("fs_grep", { pattern, path, glob, maxResults });
+  }
+  fsGlob(pattern: string, path?: string, maxResults?: number): Promise<FsEntry[]> {
+    return invoke<FsEntry[]>("fs_glob", { pattern, path, maxResults });
+  }
+  searchMessages(query: string, maxResults?: number): Promise<MessageSearchResult[]> {
+    return invoke<MessageSearchResult[]>("search_messages", { query, maxResults });
   }
 
   // ── 终端 PTY ───────────────────────────────────────────────────────────

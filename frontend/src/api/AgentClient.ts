@@ -79,6 +79,8 @@ import type {
   BrainstormErrorEvent,
   FsEntry,
   FsFile,
+  GrepMatch,
+  MessageSearchResult,
   PtySpawnInput,
   PtySession,
   PtySnapshot,
@@ -167,6 +169,7 @@ export interface AgentClient {
   skillRead(name: string, threadId?: string, args?: string): Promise<string>;
   /** 重新扫描 skill 目录,返回发现数量 (刷新信号). */
   skillReload(threadId?: string): Promise<number>;
+  skillDelete(name: string): Promise<void>;
 
   // ── 长期记忆 ──────────────────────────────────────────────────────────────
   /** 读取全局记忆文件 (AGENTS.md), 不存在时返回空字符串. */
@@ -205,6 +208,10 @@ export interface AgentClient {
   fsGetWorkspaceRoot(): Promise<string>;
   fsListDirectory(path: string, showHidden?: boolean): Promise<FsEntry[]>;
   fsReadFile(path: string, maxBytes?: number): Promise<FsFile>;
+  fsGrep(pattern: string, path?: string, glob?: string, maxResults?: number): Promise<GrepMatch[]>;
+  fsGlob(pattern: string, path?: string, maxResults?: number): Promise<FsEntry[]>;
+  searchMessages(query: string, maxResults?: number): Promise<MessageSearchResult[]>;
+
 
   // ── 终端 PTY ───────────────────────────────────────────────────────────
   ptyList(): Promise<PtySession[]>;
@@ -310,6 +317,7 @@ export const COMMAND_KEYS = [
   "skillList",
   "skillRead",
   "skillReload",
+  "skillDelete",
   "listOutputStyles",
   "readOutputStyle",
   "saveOutputStyle",
@@ -324,6 +332,9 @@ export const COMMAND_KEYS = [
   "fsGetWorkspaceRoot",
   "fsListDirectory",
   "fsReadFile",
+  "fsGrep",
+  "fsGlob",
+  "searchMessages",
   "ptyList",
   "ptySnapshot",
   "ptySpawn",
