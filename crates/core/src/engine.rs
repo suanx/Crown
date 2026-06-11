@@ -235,9 +235,12 @@ fn turn_chat_opts(
         ProviderId::Other => None,
     };
     let thinking = None;
+
     let reasoning_effort = match (provider, thinking_effort) {
         (ProviderId::Deepseek, "ultra") => Some("max".to_string()),
         (ProviderId::Deepseek, _) => Some("high".to_string()),
+        // Non-DeepSeek: pass through if user set a non-default effort
+        (ProviderId::Other, effort) if effort != "medium" && !effort.is_empty() => Some(effort.to_string()),
         _ => None,
     };
     ChatOpts {

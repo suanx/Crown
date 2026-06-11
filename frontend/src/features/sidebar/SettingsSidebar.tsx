@@ -39,7 +39,6 @@ const TABS: Array<{
   { id: "mcp", label: "MCP 服务器", icon: McpIcon, group: "app" },
   { id: "hooks", label: "Hooks", icon: BuildIcon, group: "app" },
   { id: "billing", label: "用量统计", icon: DollarIcon, group: "app" },
-  { id: "billing", label: "用量统计", icon: DollarIcon, group: "app" },
   { id: "memory", label: "长期记忆", icon: FileIcon, group: "app" },
   { id: "developer", label: "开发者", icon: BugIcon, group: "desktop" },
 ];

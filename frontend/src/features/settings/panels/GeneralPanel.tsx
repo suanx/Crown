@@ -33,10 +33,7 @@ export function GeneralPanel() {
   const setThemeVariant = useUiStore((s) => s.setThemeVariant);
   const colorScheme = useUiStore((s) => s.colorScheme);
   const setColorScheme = useUiStore((s) => s.setColorScheme);
-  const showBalance = useUiStore((s) => s.showBalanceInSidebar);
-  const setShowBalance = useUiStore((s) => s.setShowBalanceInSidebar);
-  const showMessageCost = useUiStore((s) => s.showMessageCost);
-  const setShowMessageCost = useUiStore((s) => s.setShowMessageCost);
+
 
   const ui = useSettingsStore((s) => s.ui);
   const updateUi = useSettingsStore((s) => s.updateUi);
@@ -155,30 +152,6 @@ export function GeneralPanel() {
         />
       </Section>
 
-      <Section title="账户与余额">
-        <Row
-          label="在主页显示余额"
-          description="开启时侧栏底部账户卡显示当前余额"
-          control={
-            <Toggle
-              checked={showBalance}
-              onChange={setShowBalance}
-              label="侧栏显示余额"
-            />
-          }
-        />
-        <Row
-          label="在每条消息底部显示成本"
-          description="默认关闭. 开启后每条 assistant 消息底部显示该 turn 的 CNY 成本"
-          control={
-            <Toggle
-              checked={showMessageCost}
-              onChange={setShowMessageCost}
-              label="消息成本徽章"
-            />
-          }
-        />
-      </Section>
     </div>
   );
 }
