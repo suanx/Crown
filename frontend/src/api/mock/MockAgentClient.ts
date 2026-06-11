@@ -502,6 +502,7 @@ export class MockAgentClient implements AgentClient {
     await delay();
     return "# Global Memory\n\nThis is the global AGENTS.md file. Edit it in Settings → Agent 指令.";
   }
+  async writeGlobalMemory(_content: string): Promise<void> { return; }
 
   // ── Rewind (P2) ───────────────────────────────────────────────────────────
   async rewindThread(threadId: string, _messageSeq: number): Promise<Thread> {
@@ -578,6 +579,7 @@ export class MockAgentClient implements AgentClient {
     await delay();
     return `mock-pty-${Date.now()}`;
   }
+  async polishPrompt(text: string): Promise<string> { await delay(); return `优化版: ${text}`; }
 
   async ptyList(): Promise<PtySession[]> {
     await delay();

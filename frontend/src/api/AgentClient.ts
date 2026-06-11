@@ -175,6 +175,7 @@ export interface AgentClient {
   /** 读取全局记忆文件 (AGENTS.md), 不存在时返回空字符串. */
   readGlobalMemory(): Promise<string>;
 
+  writeGlobalMemory(content: string): Promise<void>;
   // ── Output Styles (Phase 2) ───────────────────────────────────────────────
   /** 列出所有输出风格 (含当前生效标记). */
   listOutputStyles(): Promise<OutputStyle[]>;
@@ -225,6 +226,7 @@ export interface AgentClient {
   exportDiagnostics(): Promise<string>;
 
   // ── Permissions (P4 新增) ──────────────────────────────────────────────
+  polishPrompt(text: string): Promise<string>;
   /** 列出当前 thread session 内"始终允许"的规则 (Settings 撤销 UI 用). */
   listPermissionRules(threadId: string): Promise<PermissionRule[]>;
   /** 撤销之前的"允许并记住". */
@@ -324,6 +326,7 @@ export const COMMAND_KEYS = [
   "setActiveOutputStyle",
   "deleteOutputStyle",
   "readGlobalMemory",
+  "writeGlobalMemory",
   "rewindThread",
   "getUsageChart",
   "listRewindPoints",
@@ -343,6 +346,7 @@ export const COMMAND_KEYS = [
   "debugTestProvider",
   "ptyKill",
   "exportDiagnostics",
+  "polishPrompt",
   "listPermissionRules",
   "removePermissionRule",
   "getPermissionContext",

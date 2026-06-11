@@ -509,6 +509,10 @@ export class HybridClient implements AgentClient {
     this.invokeCmd("readGlobalMemory", () => this.tauri.readGlobalMemory(), () =>
       this.mock.readGlobalMemory(),
     );
+  writeGlobalMemory = (content: string): Promise<void> =>
+    this.invokeCmd("writeGlobalMemory", () => this.tauri.writeGlobalMemory(content), () =>
+      this.mock.writeGlobalMemory(content),
+    );
 
 
 
@@ -594,6 +598,11 @@ export class HybridClient implements AgentClient {
     this.invokeCmd("ptySpawn", () => this.tauri.ptySpawn(input), () =>
       this.mock.ptySpawn(input),
     );
+  polishPrompt = (text: string): Promise<string> =>
+    this.invokeCmd("polishPrompt", () => this.tauri.polishPrompt(text), () =>
+      this.mock.polishPrompt(text),
+    );
+
 
   ptyList = (): Promise<PtySession[]> =>
     this.invokeCmd("ptyList", () => this.tauri.ptyList(), () =>

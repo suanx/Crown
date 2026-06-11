@@ -7,7 +7,9 @@ import {
   StopIcon,
   CodeIcon,
   GlobeIcon,
+  BrandIcon,
 } from "@/shared/icons/set";
+import { agentClient } from "@/api";
 import { ComposerModelSelector } from "./ComposerModelSelector";
 import { ComposerModeSelector } from "./ComposerModeSelector";
 import { matchSlashCommand, applySlashCommand } from "./slashCommands";
@@ -60,6 +62,23 @@ export function ComposeBar({
     menuCommands.length > 0
       ? Math.min(menuIndex, menuCommands.length - 1)
       : 0;
+  const [polishing, setPolishing] = useState(false);
+
+  async function handlePolish() {
+    const raw = text.trim();
+    if (!raw || polishing) return;
+    setPolishing(true);
+    try {
+      const polished = await agentClient.polishPrompt(raw);
+      if (polished) setText(polished);
+    } catch {
+      // Silent fail — user can still send original text
+    } finally {
+      setPolishing(false);
+      ref.current?.focus();
+    }
+  }
+
 
   useEffect(() => {
     if (autoFocus) ref.current?.focus();
@@ -269,6 +288,36 @@ export function ComposeBar({
         />
       </div>
 
+      {/* 提示词模板快捷栏 */}
+      {!text && !streaming && (
+        <div className="flex items-center gap-1.5 px-4 pb-2 flex-wrap">
+          <button
+            onClick={() => { setText("/plan "); ref.current?.focus(); }}
+            className="text-[11px] h-6 px-2 rounded-md bg-elevated border border-border-subtle text-text-tertiary hover:text-text-secondary hover:border-border-default transition-colors shrink-0"
+          >📋 规划</button>
+          <button
+            onClick={() => { setText("/review "); ref.current?.focus(); }}
+            className="text-[11px] h-6 px-2 rounded-md bg-elevated border border-border-subtle text-text-tertiary hover:text-text-secondary hover:border-border-default transition-colors shrink-0"
+          >👁️ 审查</button>
+          <button
+            onClick={() => { setText("/test "); ref.current?.focus(); }}
+            className="text-[11px] h-6 px-2 rounded-md bg-elevated border border-border-subtle text-text-tertiary hover:text-text-secondary hover:border-border-default transition-colors shrink-0"
+          >🧪 测试</button>
+          <button
+            onClick={() => { setText("/explain "); ref.current?.focus(); }}
+            className="text-[11px] h-6 px-2 rounded-md bg-elevated border border-border-subtle text-text-tertiary hover:text-text-secondary hover:border-border-default transition-colors shrink-0"
+          >💡 解释</button>
+          <button
+            onClick={() => { setText("/simple "); ref.current?.focus(); }}
+            className="text-[11px] h-6 px-2 rounded-md bg-elevated border border-border-subtle text-text-tertiary hover:text-text-secondary hover:border-border-default transition-colors shrink-0"
+          >✂️ 极简</button>
+          <button
+            onClick={() => { setText("/safe "); ref.current?.focus(); }}
+            className="text-[11px] h-6 px-2 rounded-md bg-elevated border border-border-subtle text-text-tertiary hover:text-text-secondary hover:border-border-default transition-colors shrink-0"
+          >🛡️ 稳健</button>
+        </div>
+      )}
+
       {/* 工具栏 — 横向 padding 12,垂直 padding 8 */}
       <div className="flex items-center px-3 pb-2 gap-1">
         <ToolbarBtn icon={AttachIcon} label="附件" onClick={handleAttachClick} />
@@ -298,6 +347,25 @@ export function ComposeBar({
         {/* 模型 + 模式 — 替代原顶栏位置 */}
         <ComposerModelSelector />
         <ComposerModeSelector />
+
+        {/* 优化提示词 */}
+        <button
+          onClick={handlePolish}
+          disabled={!text.trim() || polishing}
+          title={polishing ? "优化中..." : "优化提示词"}
+          aria-label="优化提示词"
+          className={cn(
+            "h-7 w-7 rounded-md flex items-center justify-center transition-all focus-ring",
+            polishing
+              ? "animate-pulse-soft text-brand cursor-wait"
+              : text.trim()
+                ? "text-text-tertiary hover:text-brand hover:bg-brand-soft active:scale-95"
+                : "text-text-disabled cursor-not-allowed",
+          )}
+        >
+          <Icon icon={BrandIcon} size={14} weight={polishing ? "fill" : "duotone"} />
+        </button>
+
 
         {/* 发送 / 停止 */}
         <div className="ml-1">

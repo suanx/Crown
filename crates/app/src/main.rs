@@ -386,6 +386,8 @@ fn main() {
             commands::save_providers,
             commands::save_web_search_config,
             commands::fetch_provider_models,
+            commands::polish_prompt,
+
             commands::test_provider_connection,
             // hooks
             commands::list_hook_events,
@@ -395,6 +397,7 @@ fn main() {
             commands::get_project_hooks_trust,
             commands::set_project_hooks_trust,
             commands::read_global_memory,
+            commands::write_global_memory,
             // mcp
             commands::list_mcp_servers,
             commands::restart_mcp_server,

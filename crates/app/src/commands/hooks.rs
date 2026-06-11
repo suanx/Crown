@@ -228,6 +228,20 @@ pub async fn read_global_memory(state: tauri::State<'_, crate::AppState>) -> Res
     }
 }
 
+/// Write the global memory file (AGENTS.md). Creates/overwrites the file.
+#[tauri::command]
+pub async fn write_global_memory(
+    state: tauri::State<'_, crate::AppState>,
+    content: String,
+) -> Result<(), String> {
+    let path = state.data_root.join("AGENTS.md");
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+    std::fs::write(&path, &content).map_err(|e| format!("write AGENTS.md failed: {e}"))
+}
+
+
 async fn run_config_change_hook(key: &str, scope: &str, value: Option<String>) {
     let abort = CancellationToken::new();
     let result = hooks::HookRunner::load(None)

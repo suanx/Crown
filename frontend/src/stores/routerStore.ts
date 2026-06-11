@@ -30,7 +30,7 @@ export type SettingsTab =
   | "billing"
   | "shortcuts"
   | "developer"
-  | "about";
+  | "memory";
 
 interface RouterState {
   current: Route;

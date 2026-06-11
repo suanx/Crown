@@ -5,17 +5,10 @@ import {
   type UsageStatsWindow,
   type UsageChartPoint,
 } from "@/api";
-import { useBalanceStore } from "@/stores/balanceStore";
-import { PanelTitle, Section, Row } from "./_shared";
-import { Pill } from "@/shared/ui/Pill";
+import { PanelTitle } from "./_shared";
 import { Icon } from "@/shared/icons/Icon";
-import { CheckCircleIcon, WarningIcon } from "@/shared/icons/set";
-import {
-  balanceTone,
-  formatBalance,
-  formatCostCny,
-  formatTokens,
-} from "@/shared/lib/format";
+import { CheckCircleIcon } from "@/shared/icons/set";
+import { formatCostCny, formatTokens } from "@/shared/lib/format";
 import { cn } from "@/shared/lib/cn";
 
 const WINDOW_OPTIONS: Array<{ id: UsageStatsWindow; label: string }> = [
@@ -30,15 +23,10 @@ const WINDOW_LABEL: Record<UsageStatsWindow, string> = Object.fromEntries(
   WINDOW_OPTIONS.map((o) => [o.id, o.label]),
 ) as Record<UsageStatsWindow, string>;
 
-/**
- * 用量与计费 — 含每日趋势柱状图 + 缓存命中环形图。
- */
 export function BillingPanel() {
   const [window, setWindow] = useState<UsageStatsWindow>("session");
   const [stats, setStats] = useState<UsageStats | null>(null);
   const [chartData, setChartData] = useState<UsageChartPoint[]>([]);
-  const balance = useBalanceStore((s) => s.balance);
-  const reloadBalance = useBalanceStore((s) => s.reload);
 
   useEffect(() => {
     void agentClient.getUsageStats({ window }).then(setStats);
@@ -48,23 +36,14 @@ export function BillingPanel() {
     void agentClient.getUsageChart().then(setChartData);
   }, []);
 
-  useEffect(() => {
-    void reloadBalance();
-  }, [reloadBalance]);
-
   const cost = stats?.totalCostUsd ?? 0;
-  const saved = stats?.cumulativeCacheSavedUsd ?? 0;
 
   return (
     <div>
       <PanelTitle
-        title="用量与计费"
-        description="按需查看,默认不在主界面常驻显示."
+        title="用量统计"
+        description="Token 消耗与缓存效率统计"
       />
-
-      {balance && balance.isAvailable && balance.balanceInfos.length > 0 && (
-        <BalanceBlock balance={balance} />
-      )}
 
       {/* 用量大数 + 时间窗切换 */}
       <div className="rounded-xl border border-border-subtle bg-elevated p-6 mb-6">
@@ -105,16 +84,9 @@ export function BillingPanel() {
           />
           <Stat label="输出 tokens" value={formatTokens(stats?.outputTokens ?? 0)} />
         </div>
-
-        {saved > 0 && (
-          <div className="mt-3 text-xs text-success inline-flex items-center gap-1">
-            <Icon icon={CheckCircleIcon} size={12} weight="fill" />
-            缓存累计省下 {formatCostCny(saved)}
-          </div>
-        )}
       </div>
 
-      {/* 每日成本趋势柱状图 */}
+      {/* 每日消耗趋势柱状图 */}
       <div className="rounded-xl border border-border-subtle bg-elevated p-6 mb-6">
         <div className="text-sm font-medium text-text-primary mb-4">
           每日消耗趋势 <span className="text-xs text-text-tertiary ml-2">近 30 天</span>
@@ -139,24 +111,6 @@ export function BillingPanel() {
           </div>
         </div>
       </div>
-
-      {/* 计费策略说明 */}
-      <Section title="计费策略">
-        <Row
-          label="缓存命中折扣"
-          description="DeepSeek 前缀缓存命中按 1/10 价格计入"
-          control={<Pill tone="success">已生效</Pill>}
-        />
-        <Row
-          label="预算上限"
-          description="预算 / off-peak / 自动升级 Pro 等高级控制后续推出"
-          control={
-            <Pill tone="neutral" icon={WarningIcon}>
-              规划中
-            </Pill>
-          }
-        />
-      </Section>
     </div>
   );
 }
@@ -180,73 +134,37 @@ function CostChart({ data }: { data: UsageChartPoint[] }) {
   const maxCost = Math.max(...data.map((d) => d.totalCostUsd), 0.001);
   const barW = Math.max(3, Math.min(16, innerW / data.length - 2));
 
-  // Y axis ticks
   const ticks = 4;
   const yStep = maxCost / ticks;
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-full">
-      {/* Grid lines + Y labels */}
       {Array.from({ length: ticks + 1 }, (_, i) => {
         const y = PAD.t + innerH - (i / ticks) * innerH;
         return (
           <g key={i}>
-            <line
-              x1={PAD.l}
-              y1={y}
-              x2={W - PAD.r}
-              y2={y}
-              stroke="var(--ds-border-subtle)"
-              strokeWidth={0.5}
-            />
-            <text
-              x={PAD.l - 4}
-              y={y + 3}
-              textAnchor="end"
-              className="fill-text-tertiary"
-              fontSize={9}
-            >
+            <line x1={PAD.l} y1={y} x2={W - PAD.r} y2={y} stroke="var(--ds-border-subtle)" strokeWidth={0.5} />
+            <text x={PAD.l - 4} y={y + 3} textAnchor="end" className="fill-text-tertiary" fontSize={9}>
               {formatCostCny(yStep * i)}
             </text>
           </g>
         );
       })}
 
-      {/* Bars */}
       {data.map((d, i) => {
         const barH = (d.totalCostUsd / maxCost) * innerH;
         const x = PAD.l + (i / data.length) * innerW + (innerW / data.length - barW) / 2;
         const y = PAD.t + innerH - barH;
         const date = new Date(d.dayEpochMs);
         const label = `${date.getMonth() + 1}/${date.getDate()}`;
-        const isToday =
-          date.getDate() === new Date().getDate() &&
-          date.getMonth() === new Date().getMonth();
+        const isToday = date.getDate() === new Date().getDate() && date.getMonth() === new Date().getMonth();
         return (
           <g key={i}>
-            <rect
-              x={x}
-              y={y}
-              width={barW}
-              height={barH}
-              rx={2}
-              className={isToday ? "fill-brand" : "fill-brand/60"}
-            >
-              <title>
-                {label} · {formatCostCny(d.totalCostUsd)}
-              </title>
+            <rect x={x} y={y} width={barW} height={barH} rx={2} className={isToday ? "fill-brand" : "fill-brand/60"}>
+              <title>{label} · {formatCostCny(d.totalCostUsd)}</title>
             </rect>
-            {/* Show label for every N-th bar + today */}
             {(i % Math.max(1, Math.floor(data.length / 8)) === 0 || isToday) && (
-              <text
-                x={x + barW / 2}
-                y={PAD.t + innerH + 12}
-                textAnchor="middle"
-                className={cn(
-                  "fill-text-tertiary text-[8px]",
-                  isToday && "fill-brand font-medium",
-                )}
-              >
+              <text x={x + barW / 2} y={PAD.t + innerH + 12} textAnchor="middle" className={cn("fill-text-tertiary text-[8px]", isToday && "fill-brand font-medium")}>
                 {label}
               </text>
             )}
@@ -268,123 +186,27 @@ function CacheDonut({ ratio }: { ratio: number }) {
 
   return (
     <svg width={size} height={size} className="shrink-0">
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={r}
-        fill="none"
-        stroke="var(--ds-border-subtle)"
-        strokeWidth={stroke}
-      />
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--ds-border-subtle)" strokeWidth={stroke} />
       {ratio > 0 && (
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          fill="none"
-          stroke="var(--ds-success)"
-          strokeWidth={stroke}
-          strokeDasharray={circ}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-          transform={`rotate(-90 ${size / 2} ${size / 2})`}
-          className="transition-all duration-500"
-        />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--ds-success)" strokeWidth={stroke}
+          strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round"
+          transform={`rotate(-90 ${size / 2} ${size / 2})`} className="transition-all duration-500" />
       )}
-      <text
-        x={size / 2}
-        y={size / 2}
-        textAnchor="middle"
-        dominantBaseline="central"
-        className="fill-text-primary font-semibold"
-        fontSize={14}
-      >
+      <text x={size / 2} y={size / 2} textAnchor="middle" dominantBaseline="central" className="fill-text-primary font-semibold" fontSize={14}>
         {(ratio * 100).toFixed(0)}%
       </text>
     </svg>
   );
 }
 
-// ── 余额区块 ────────────────────────────────────────────────────────────────
-
-function BalanceBlock({
-  balance,
-}: {
-  balance: NonNullable<ReturnType<typeof useBalanceStore.getState>["balance"]>;
-}) {
-  const primary =
-    balance.balanceInfos.find((b) => b.currency === balance.primaryCurrency) ??
-    balance.balanceInfos[0];
-  const tone = balanceTone(primary.total);
-
-  return (
-    <div
-      className={cn(
-        "rounded-xl border p-5 mb-6",
-        tone === "danger" && "border-danger/40 bg-danger-soft",
-        tone === "warning" && "border-warning/40 bg-warning-soft",
-        tone === "success" && "border-border-subtle bg-elevated",
-      )}
-    >
-      <div className="text-xs text-text-tertiary mb-1">账户余额</div>
-      <div className="flex items-baseline gap-3">
-        <span
-          className={cn(
-            "text-2xl font-semibold tabular-nums",
-            tone === "danger" && "text-danger",
-            tone === "warning" && "text-warning",
-            tone === "success" && "text-text-primary",
-          )}
-        >
-          {formatBalance(primary.currency, primary.total)}
-        </span>
-        {primary.granted !== null && primary.granted > 0 && (
-          <span className="text-xs text-text-tertiary">
-            含赠送 {formatBalance(primary.currency, primary.granted)}
-          </span>
-        )}
-      </div>
-      {balance.balanceInfos.length > 1 && (
-        <div className="mt-2 flex flex-wrap gap-3 text-xs text-text-tertiary">
-          {balance.balanceInfos
-            .filter((b) => b.currency !== primary.currency)
-            .map((b) => (
-              <span key={b.currency}>
-                {formatBalance(b.currency, b.total)}
-              </span>
-            ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  hint,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-}) {
+function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div>
       <div className="text-text-tertiary mb-1 inline-flex items-center gap-1">
         {label}
-        {hint && (
-          <span
-            className="text-text-tertiary opacity-60"
-            title={hint}
-            aria-label={hint}
-          >
-            ⓘ
-          </span>
-        )}
+        {hint && <span className="text-text-tertiary opacity-60" title={hint} aria-label={hint}>ⓘ</span>}
       </div>
-      <div className="text-sm text-text-primary font-mono tabular-nums">
-        {value}
-      </div>
+      <div className="text-sm text-text-primary font-mono tabular-nums">{value}</div>
     </div>
   );
 }

@@ -1,6 +1,8 @@
 import { useRouterStore, type SettingsTab } from "@/stores/routerStore";
 import { useSessionStore } from "@/stores/sessionStore";
 import { Icon } from "@/shared/icons/Icon";
+import { cn } from "@/shared/lib/cn";
+
 import {
   ArrowRightIcon,
   GlobeIcon,
@@ -11,12 +13,10 @@ import {
   BuildIcon,
   SettingsIcon,
   BugIcon,
-  InfoIcon,
   DollarIcon,
   EditIcon,
+  FileIcon,
 } from "@/shared/icons/set";
-import { cn } from "@/shared/lib/cn";
-
 /**
  * 设置模式下的 Sidebar.
  * 整体替换 ChatSidebar (不是叠层),布局保持稳定.
@@ -38,10 +38,10 @@ const TABS: Array<{
   { id: "permissions", label: "权限", icon: ShieldIcon, group: "app" },
   { id: "mcp", label: "MCP 服务器", icon: McpIcon, group: "app" },
   { id: "hooks", label: "Hooks", icon: BuildIcon, group: "app" },
-  { id: "billing", label: "用量与计费", icon: DollarIcon, group: "app" },
-  { id: "shortcuts", label: "快捷键", icon: SettingsIcon, group: "desktop" },
+  { id: "billing", label: "用量统计", icon: DollarIcon, group: "app" },
+  { id: "billing", label: "用量统计", icon: DollarIcon, group: "app" },
+  { id: "memory", label: "长期记忆", icon: FileIcon, group: "app" },
   { id: "developer", label: "开发者", icon: BugIcon, group: "desktop" },
-  { id: "about", label: "关于", icon: InfoIcon, group: "desktop" },
 ];
 
 export function SettingsSidebar() {

@@ -111,6 +111,7 @@ export const CONTRACT_STATUS: Record<EndpointKey, ContractStatus> = {
   deleteOutputStyle: "connected",
   // 长期记忆 — 后端 read_global_memory 真实现.
   readGlobalMemory: "connected",
+  writeGlobalMemory: "connected",
   // Rewind (P2) — 后端 rewind_thread/list_rewind_points 真实现.
   rewindThread: "connected",
   listRewindPoints: "connected",
@@ -133,6 +134,7 @@ export const CONTRACT_STATUS: Record<EndpointKey, ContractStatus> = {
   ptyResize: "connected",
   ptyKill: "connected",
   exportDiagnostics: "connected",
+  polishPrompt: "connected",
   // Permissions P4 新增 (3) — 全部实化
   listPermissionRules: "connected",
   removePermissionRule: "connected",

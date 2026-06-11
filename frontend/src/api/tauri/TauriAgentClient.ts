@@ -346,6 +346,10 @@ export class TauriAgentClient implements AgentClient {
   readGlobalMemory(): Promise<string> {
     return invoke<string>("read_global_memory");
   }
+  writeGlobalMemory(content: string): Promise<void> {
+    return invoke<void>("write_global_memory", { content });
+  }
+
 
   // ── Rewind (P2) ───────────────────────────────────────────────────────────
   rewindThread(threadId: string, messageSeq: number): Promise<Thread> {
@@ -396,6 +400,10 @@ export class TauriAgentClient implements AgentClient {
   searchMessages(query: string, maxResults?: number): Promise<MessageSearchResult[]> {
     return invoke<MessageSearchResult[]>("search_messages", { query, maxResults });
   }
+  polishPrompt(text: string): Promise<string> {
+    return invoke<string>("polish_prompt", { text });
+  }
+
 
   // ── 终端 PTY ───────────────────────────────────────────────────────────
   ptyList(): Promise<PtySession[]> {

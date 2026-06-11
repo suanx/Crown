@@ -18,12 +18,12 @@ export function SlashCommandMenu({
 }) {
   if (commands.length === 0) return null;
   return (
-    <div className="mb-2 rounded-xl border border-border-subtle bg-overlay shadow-lg overflow-hidden">
+    <div className="mb-2 rounded-xl border border-border-subtle bg-overlay shadow-lg overflow-hidden max-h-[240px] overflow-y-auto">
       {commands.map((c, i) => (
         <button
           key={c.name}
           onMouseDown={(e) => {
-            e.preventDefault(); // 防 textarea 失焦
+            e.preventDefault();
             onSelect(c);
           }}
           className={cn(
@@ -37,7 +37,12 @@ export function SlashCommandMenu({
             className="text-text-tertiary mt-0.5 shrink-0"
           />
           <div className="min-w-0">
-            <div className="text-sm font-medium text-text-primary">/{c.name}</div>
+            <div className="text-sm font-medium text-text-primary">
+              /{c.name}
+              <span className="ml-2 text-xs text-text-tertiary font-normal">
+                {c.label}
+              </span>
+            </div>
             <div className="text-xs text-text-secondary truncate">
               {c.description}
             </div>
