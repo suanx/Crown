@@ -39,7 +39,7 @@ export function AboutPanel() {
             Crown
           </div>
           <div className="text-xs text-text-tertiary mt-0.5 font-mono">
-            v1.3.0
+            v1.3.2
           </div>
 
         </div>
