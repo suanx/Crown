@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <img alt="Version" src="https://img.shields.io/badge/version-1.3.2-111111?style=for-the-badge" />
+  <img alt="Version" src="https://img.shields.io/badge/version-1.3.3-111111?style=for-the-badge" />
   <img alt="Platform" src="https://img.shields.io/badge/platform-Windows-2B2D2B?style=for-the-badge" />
   <img alt="Tauri" src="https://img.shields.io/badge/Tauri-2.x-444444?style=for-the-badge" />
   <img alt="License" src="https://img.shields.io/badge/license-MIT-EDEBE3?style=for-the-badge&labelColor=111111&color=EDEBE3" />
@@ -58,7 +58,7 @@ Crown 是一个基于 **Tauri + Rust + React + TypeScript** 的桌面 AI Agent �
 在 GitHub Releases 下载安装包：
 
 ```text
-Crown_1.3.2_x64-setup.exe
+Crown_1.3.3_x64-setup.exe
 ```
 
 安装后打开 Crown，在设置页配置模型或 Web Search API Key。
