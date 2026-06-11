@@ -15,11 +15,14 @@ import { Icon } from "@/shared/icons/Icon";
 import type { ReactNode } from "react";
 import { ProviderIcon } from "@/shared/ui/ProviderIcon";
 import {
+  CaretDownIcon,
+  CaretRightIcon,
   CheckIcon,
   CloseIcon,
   PlusIcon,
   RefreshIcon,
 } from "@/shared/icons/set";
+
 import { cn } from "@/shared/lib/cn";
 
 const KIND_OPTIONS: Array<{ id: ProviderKind; label: string }> = [
@@ -33,6 +36,15 @@ const KIND_OPTIONS: Array<{ id: ProviderKind; label: string }> = [
 function cloneProviders(items: ProviderConfig[]) {
   return items.map((p) => ({ ...p, models: p.models.map((m) => ({ ...m })) }));
 }
+const CONTEXT_WINDOW_PRESETS = [
+  { label: "4K", value: 4096 },
+  { label: "8K", value: 8192 },
+  { label: "16K", value: 16384 },
+  { label: "32K", value: 32768 },
+  { label: "64K", value: 65536 },
+  { label: "128K", value: 131072 },
+  { label: "自定义", value: -1 },
+] as const;
 
 function shortKey(key: string) {
   if (!key) return "未填写";
@@ -81,6 +93,7 @@ export function ModelsPanel() {
   const [testResult, setTestResult] = useState<ProviderTestResult | null>(null);
   const [syncError, setSyncError] = useState<string | null>(null);
   const [newModelId, setNewModelId] = useState("");
+  const [expandedModelId, setExpandedModelId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -406,31 +419,100 @@ export function ModelsPanel() {
           </Section>
 
           <Section title="模型列表" className="mb-0 [&>h2]:mb-1">
-            {selected.models.map((m) => (
-              <div
-                key={m.id}
-                className="px-3 py-2 flex items-center gap-2"
-              >
-                <input
-                  type="checkbox"
-                  checked={m.enabled}
-                  onChange={(e) => updateModel(m.id, { enabled: e.target.checked })}
-                />
-                <Input
-                  value={m.label}
-                  onChange={(e) => updateModel(m.id, { label: e.target.value })}
-                  className="w-[160px]"
-                />
-                <div className="min-w-0 flex-1 truncate text-xs font-mono text-text-tertiary">
-                  {m.id}
+            {selected.models.map((m) => {
+              const isExpanded = expandedModelId === m.id;
+              const cw = m.contextWindow ?? 0;
+              const presetIndex = CONTEXT_WINDOW_PRESETS.findIndex((p) => p.value === cw);
+              const presetLabel =
+                presetIndex >= 0 ? CONTEXT_WINDOW_PRESETS[presetIndex].label : "自定义";
+
+              return (
+                <div key={m.id}>
+                  {/* ── 模型行标题（点击展开/收起上下文配置） ── */}
+                  <div
+                    className="flex cursor-pointer select-none items-center gap-2 px-3 py-2"
+                    onClick={() => setExpandedModelId(isExpanded ? null : m.id)}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={m.enabled}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        updateModel(m.id, { enabled: e.target.checked });
+                      }}
+                    />
+                    <Input
+                      value={m.label}
+                      onChange={(e) => updateModel(m.id, { label: e.target.value })}
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-[160px]"
+                    />
+                    <div className="min-w-0 flex-1 truncate font-mono text-xs text-text-tertiary">
+                      {m.id}
+                    </div>
+                    {selected.id === defaultProviderId && m.id === defaultModel && (
+                      <Pill tone="brand" icon={CheckIcon} size="sm">
+                        默认
+                      </Pill>
+                    )}
+                    <Icon
+                      icon={isExpanded ? CaretDownIcon : CaretRightIcon}
+                      size={12}
+                      className="shrink-0 text-text-tertiary"
+                    />
+                  </div>
+
+                  {/* ── 展开后：上下文长度配置 ── */}
+                  {isExpanded && (
+                    <div className="px-6 pb-3">
+                      <CompactRow
+                        label="上下文长度"
+                        description="设置该模型的上下文窗口大小"
+                        control={
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={presetLabel}
+                              onChange={(e) => {
+                                const label = e.target.value;
+                                const preset = CONTEXT_WINDOW_PRESETS.find((p) => p.label === label);
+                                if (!preset) return;
+                                if (preset.value === -1) {
+                                  // "自定义"：保持当前值，未设置时默认 4096
+                                  updateModel(m.id, { contextWindow: m.contextWindow || 4096 });
+                                } else {
+                                  updateModel(m.id, { contextWindow: preset.value });
+                                }
+                              }}
+                              className="h-9 w-[120px] rounded-md border border-border-default bg-input-bg px-3 text-sm text-text-primary outline-none focus:border-border-focus"
+                            >
+                              {CONTEXT_WINDOW_PRESETS.map((p) => (
+                                <option key={p.label} value={p.label}>
+                                  {p.label}
+                                </option>
+                              ))}
+                            </select>
+                            {presetLabel === "自定义" && (
+                              <Input
+                                type="number"
+                                value={m.contextWindow ? String(m.contextWindow) : ""}
+                                onChange={(e) => {
+                                  const val = parseInt(e.target.value, 10);
+                                  if (!isNaN(val) && val > 0) {
+                                    updateModel(m.id, { contextWindow: val });
+                                  }
+                                }}
+                                className="w-[120px]"
+                                placeholder="Token 数"
+                              />
+                            )}
+                          </div>
+                        }
+                      />
+                    </div>
+                  )}
                 </div>
-                {selected.id === defaultProviderId && m.id === defaultModel && (
-                  <Pill tone="brand" icon={CheckIcon} size="sm">
-                    默认
-                  </Pill>
-                )}
-              </div>
-            ))}
+              );
+            })}
             <div className="px-3 py-2 flex items-center gap-2">
               <Input
                 value={newModelId}

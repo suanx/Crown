@@ -311,6 +311,9 @@ pub struct ProviderModelDto {
     pub supports_tools: bool,
     #[serde(default)]
     pub supports_reasoning: bool,
+    /// Custom context window in tokens. 0 = use model default.
+    #[serde(default)]
+    pub context_window: u64,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -352,6 +355,7 @@ pub struct AppConfigDto {
     pub compaction: CompactionDto,
     pub shell: ShellDto,
     pub subagent: SubagentDto,
+    pub workspace_dir: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -424,6 +428,7 @@ pub struct ConfigPatchDto {
     pub compaction: Option<CompactionDto>,
     pub shell: Option<ShellDto>,
     pub subagent: Option<SubagentDto>,
+    pub workspace_dir: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

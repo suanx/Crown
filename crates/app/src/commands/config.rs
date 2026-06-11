@@ -161,6 +161,7 @@ fn builtin_deepseek_provider(
                 enabled: true,
                 supports_tools: true,
                 supports_reasoning: true,
+            context_window: 0,
             },
             ProviderModelDto {
                 id: "deepseek-v4-pro".into(),
@@ -168,6 +169,7 @@ fn builtin_deepseek_provider(
                 enabled: true,
                 supports_tools: true,
                 supports_reasoning: true,
+            context_window: 0,
             },
         ],
     }
@@ -190,6 +192,7 @@ fn builtin_provider_templates() -> Vec<StoredProviderConfig> {
                     enabled: true,
                     supports_tools: true,
                     supports_reasoning: true,
+                context_window: 0,
                 },
                 ProviderModelDto {
                     id: "gpt-5.4-nano".into(),
@@ -197,6 +200,7 @@ fn builtin_provider_templates() -> Vec<StoredProviderConfig> {
                     enabled: true,
                     supports_tools: true,
                     supports_reasoning: false,
+                context_window: 0,
                 },
             ],
         },
@@ -691,6 +695,13 @@ pub async fn get_config(_state: tauri::State<'_, AppState>) -> Result<AppConfigD
             max_subtasks: 5,
             model: String::new(),
         });
+    let workspace_dir = json
+        .get("workspaceDir")
+        .and_then(|v| v.as_str())
+        .filter(|s| !s.is_empty())
+        .map(|s| s.to_string())
+        .unwrap_or_default();
+
 
 
     Ok(AppConfigDto {
@@ -707,6 +718,7 @@ pub async fn get_config(_state: tauri::State<'_, AppState>) -> Result<AppConfigD
         compaction,
         shell,
         subagent,
+        workspace_dir,
     })
 }
 
@@ -878,6 +890,7 @@ fn parse_model_list(value: serde_json::Value) -> Vec<ProviderModelDto> {
                 enabled: true,
                 supports_tools: true,
                 supports_reasoning: false,
+            context_window: 0,
             })
         })
         .collect()

@@ -55,7 +55,7 @@ const DEFAULT_SETTINGS: SettingsData = {
     maxSubtasks: 5,
     model: "",
   },
-
+  workspaceDir: "",
 };
 
 // ── 类型 ────────────────────────────────────────────────────────────────────
@@ -97,7 +97,7 @@ export interface SettingsData {
     maxSubtasks: number;
     model: string;
   };
-
+  workspaceDir: string;
 }
 
 export type TestConnectionResult =
@@ -177,7 +177,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
       compaction: s.compaction,
       shell: s.shell,
       subagent: s.subagent,
-
+      workspaceDir: s.workspaceDir,
     };
   }
 
@@ -207,8 +207,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
             budget: config.budget,
             compaction: config.compaction,
             shell: config.shell,
-            subagent: config.subagent,
-
+            workspaceDir: config.workspaceDir,
           };
           set({ ...data, loaded: true });
           // 同时缓存到 local 作为 fallback
@@ -321,7 +320,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
         compaction: data.compaction,
         shell: data.shell,
         subagent: data.subagent,
-
+        workspaceDir: data.workspaceDir,
       };
       try {
         await agentClient.setConfig(patch);

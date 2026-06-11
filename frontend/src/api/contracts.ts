@@ -581,6 +581,8 @@ export interface ProviderModel {
   id: string;
   label: string;
   enabled: boolean;
+  /** Custom context window in tokens. 0 = use model default. */
+  contextWindow?: number;
 }
 
 export interface ProviderConfig {
@@ -857,7 +859,7 @@ export interface AppConfig {
     maxSubtasks: number;
     model: string;
   };
-
+  workspaceDir: string;
 }
 
 // ┌─────────────────────────────────────────────────────────────────────────┐
@@ -960,7 +962,7 @@ export interface ConfigPatch {
     maxSubtasks: number;
     model: string;
   };
-
+  workspaceDir?: string;
 }
 
 // ┌─────────────────────────────────────────────────────────────────────────┐

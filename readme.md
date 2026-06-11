@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="docs/assets/crown-readme-header.png" alt="Crown" width="100%" />
-</p>
+
 
 <h1 align="center">Crown</h1>
 

@@ -226,6 +226,7 @@ export interface AgentClient {
   exportDiagnostics(): Promise<string>;
 
   // ── Permissions (P4 新增) ──────────────────────────────────────────────
+  debugTestStream(providerId: string, model: string, message: string): Promise<string>;
   polishPrompt(text: string): Promise<string>;
   /** 列出当前 thread session 内"始终允许"的规则 (Settings 撤销 UI 用). */
   listPermissionRules(threadId: string): Promise<PermissionRule[]>;
@@ -344,6 +345,7 @@ export const COMMAND_KEYS = [
   "ptyWrite",
   "ptyResize",
   "debugTestProvider",
+  "debugTestStream",
   "ptyKill",
   "exportDiagnostics",
   "polishPrompt",

@@ -11,6 +11,7 @@ import { BillingPanel } from "./panels/BillingPanel";
 import { ShortcutsPanel } from "./panels/ShortcutsPanel";
 import { DeveloperPanel } from "./panels/DeveloperPanel";
 import { MemoryPanel } from "./panels/MemoryPanel";
+import { WorkspacePanel } from "./panels/WorkspacePanel";
 
 export interface SettingsPageProps {
   tab: SettingsTab;
@@ -40,5 +41,6 @@ function renderPanel(tab: SettingsTab) {
     case "shortcuts": return <ShortcutsPanel />;
     case "developer": return <DeveloperPanel />;
     case "memory": return <MemoryPanel />;
+    case "workspace": return <WorkspacePanel />;
   }
 }

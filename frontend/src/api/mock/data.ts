@@ -738,7 +738,7 @@ export const MOCK_CONFIG: AppConfig = {
     maxSubtasks: 5,
     model: "",
   },
-
+  workspaceDir: "C:/Projects",
 };
 
 export const MOCK_USAGE_STATS: UsageStats = {
