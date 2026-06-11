@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.3.2
+## v1.3.3
 
 ### 🧠 AI 增强
 - 强化 system prompt 思考指引，鼓励模型深入分析
