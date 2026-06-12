@@ -2,6 +2,7 @@ use std::pin::Pin;
 
 use anyhow::{anyhow, Result};
 use futures::stream::Stream;
+use serde::Deserialize;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio_util::io::StreamReader;
 use tracing::warn;
