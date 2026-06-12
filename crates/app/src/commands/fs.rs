@@ -186,7 +186,7 @@ pub async fn fs_grep(
         .line_number(true)
         .build();
 
-    let mut walk = ignore::WalkBuilder::new(&root)
+    let walk = ignore::WalkBuilder::new(&root)
         .git_global(true)
         .git_ignore(true)
         .git_exclude(true)

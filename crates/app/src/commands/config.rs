@@ -761,7 +761,7 @@ pub async fn set_config(
     }
     if let Some(dir) = patch.workspace_dir {
         if dir.is_empty() {
-            json.remove("workspaceDir");
+            json.as_object_mut().map(|obj| obj.remove("workspaceDir"));
         } else {
             json["workspaceDir"] = serde_json::Value::String(dir);
         }

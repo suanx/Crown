@@ -136,9 +136,8 @@ pub fn format_deepseek_prompt(messages: &[ChatMessage], drop_thinking: bool) -> 
                         MessageContent::Text(s) => prompt.push_str(s),
                         MessageContent::MultiPart(parts) => {
                             for part in parts {
-                                if let ContentPart::Text { text } = part {
-                                    prompt.push_str(text);
-                                }
+                                let ContentPart::Text { text } = part;
+                                prompt.push_str(text);
                             }
                         }
                     }

@@ -1,4 +1,12 @@
 # Changelog
+
+## v1.3.6
+
+### 🐛 修复
+- 修复 `set_config` 中 `json.remove("workspaceDir")` Rust 编译错误（`serde_json::Value` 无 `.remove()` 方法）
+- 修复 `template.rs` 中 irrefutable `if let` 编译器警告
+- 修复 `fs.rs` 中 `mut` 未被使用编译器警告
+
 ## v1.3.5
 
 ### 🧹 清理
@@ -6,8 +14,6 @@
 - 移除前端 `debug_test_stream` 死代码（后端未注册，UI 未调用）
 
 ## v1.3.4
-## v1.3.4
-
 ### 📝 文档
 - README 全面重写：新增架构图、数据流说明、技术栈表格、完整项目结构树
 - 新增内置技能对比表、Web Search 供应商表、隐私安全说明
