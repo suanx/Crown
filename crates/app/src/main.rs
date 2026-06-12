@@ -223,6 +223,10 @@ fn main() {
             ));
             engine.set_prompt_augment(prompt_augment.clone());
             engine.set_provider_client_resolver(Arc::new(ConfigProviderClientResolver));
+            // 初始化用户自定义上下文长度覆盖表。
+            engine.set_context_window_overrides(
+                crate::commands::config::compute_context_window_overrides(),
+            );
 
             // EPIC 1: 注入结构化问答 gate（`ask_user_question` 工具委托此处阻塞）。
             {

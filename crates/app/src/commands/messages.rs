@@ -29,11 +29,12 @@ pub async fn send_message(
     let resolved_id: ThreadId = if input.thread_id.is_empty() {
         let provider_id = crate::commands::config::read_default_provider_id_pub();
         let model = crate::commands::config::read_default_model_pub();
+        let workspace_dir = crate::commands::config::read_stored_workspace_dir();
         let repo = ThreadRepo::new(state.db.as_ref());
         repo.create(ThreadInsert {
             name: None,
             model,
-            cwd: None,
+            cwd: Some(workspace_dir).filter(|s| !s.is_empty()),
             permission_mode: "default".into(),
             provider_id,
             thinking_effort: Some("high".into()),
@@ -42,6 +43,7 @@ pub async fn send_message(
         })
         .map_err(|e| format!("create_thread: {e}"))?
         .id
+    } else {
     } else {
         input.thread_id
     };

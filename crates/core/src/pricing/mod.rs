@@ -43,6 +43,12 @@ pub enum ProviderId {
     /// threads + missing config so existing clients keep working.
     #[default]
     Deepseek,
+    /// Anthropic (Claude models).
+    #[serde(rename = "anthropic")]
+    Anthropic,
+    /// OpenAI (GPT / o-series models).
+    #[serde(rename = "openai")]
+    Openai,
     /// Forward-compatible catch-all for unknown / future providers.
     /// `compute_cost` returns 0.0 + warns; callers must treat as "no
     /// pricing available" rather than "free".
@@ -55,6 +61,8 @@ impl ProviderId {
     pub fn as_str(self) -> &'static str {
         match self {
             ProviderId::Deepseek => "deepseek",
+            ProviderId::Anthropic => "anthropic",
+            ProviderId::Openai => "openai",
             ProviderId::Other => "other",
         }
     }
@@ -65,9 +73,12 @@ impl ProviderId {
     pub fn from_str_lossy(s: &str) -> Self {
         match s.to_ascii_lowercase().as_str() {
             "deepseek" => ProviderId::Deepseek,
+            "anthropic" => ProviderId::Anthropic,
+            "openai" => ProviderId::Openai,
             _ => ProviderId::Other,
         }
     }
+}
 }
 
 /// Generic per-model pricing record. All fields USD per 1M tokens.
@@ -132,7 +143,9 @@ impl UsageBreakdown {
                 cache_creation_tokens: 0,
                 output_tokens: u.completion_tokens as u64,
             },
-            ProviderId::Other => Self {
+            // Anthropic and OpenAI: fallback until Usage carries their
+            // provider-specific cache fields.
+            ProviderId::Anthropic | ProviderId::Openai | ProviderId::Other => Self {
                 cache_read_tokens: 0,
                 cache_miss_tokens: u.prompt_tokens as u64,
                 cache_creation_tokens: 0,
@@ -154,10 +167,10 @@ impl UsageBreakdown {
 fn pricing_for(provider: ProviderId, model: &str) -> Option<&'static ModelPricing> {
     // Static fallback (the hardcoded tables). Override takes precedence
     // but it can't return a `&'static` because the override pricing is
-    // built at runtime — the call sites that need ownership go through
-    // [`compute_cost`] / [`cache_savings_usd`] which already handle this.
     match provider {
         ProviderId::Deepseek => deepseek::pricing_for(model),
+        ProviderId::Anthropic => anthropic::pricing_for(model),
+        ProviderId::Openai => openai::pricing_for(model),
         ProviderId::Other => None,
     }
 }
@@ -175,14 +188,18 @@ fn pricing_for_owned(provider: ProviderId, model: &str) -> Option<ModelPricing> 
 /// Returns the context window size in tokens for the given provider+model.
 /// Falls back to 131_072 for unknown combinations.
 ///
-/// **Deliberately does NOT consult pricing overrides.** A user pricing
-/// override only describes *cost* (it carries no real context window — the
-/// override entry stores a placeholder `context_window: 0`). Routing this
-/// through the override would return 0, which makes the compaction ratio
-/// `prompt_tokens / 0` = inf/NaN so folding never fires and the next request
-/// overflows the window → 400. The window is an intrinsic model property, so
-/// we always read it from the hardcoded table (or the safe fallback).
-pub fn context_window(provider: ProviderId, model: &str) -> usize {
+/// Accepts an optional `custom_override` — when `Some(n > 0)`, that value is
+/// returned instead of the hardcoded table entry, allowing users to set a
+/// custom context window per model via the UI (Settings → 模型供应商).
+///
+/// **Still deliberately does NOT consult pricing overrides** (which carry a
+/// placeholder `context_window: 0` — see pricing/overrides.rs).
+pub fn context_window(provider: ProviderId, model: &str, custom_override: Option<usize>) -> usize {
+    if let Some(custom) = custom_override {
+        if custom > 0 {
+            return custom;
+        }
+    }
     pricing_for(provider, model)
         .map(|p| p.context_window as usize)
         .unwrap_or(131_072)
@@ -233,13 +250,15 @@ mod tests {
         assert_eq!(compute_cost(ProviderId::Other, "anything", u), 0.0);
     }
 
-    #[test]
     fn provider_id_round_trip_lossy() {
         assert_eq!(ProviderId::from_str_lossy("deepseek"), ProviderId::Deepseek);
         assert_eq!(ProviderId::from_str_lossy("DeepSeek"), ProviderId::Deepseek);
-        assert_eq!(ProviderId::from_str_lossy("openai"), ProviderId::Other);
+        assert_eq!(ProviderId::from_str_lossy("openai"), ProviderId::Openai);
+        assert_eq!(ProviderId::from_str_lossy("anthropic"), ProviderId::Anthropic);
         assert_eq!(ProviderId::from_str_lossy(""), ProviderId::Other);
         assert_eq!(ProviderId::Deepseek.as_str(), "deepseek");
+        assert_eq!(ProviderId::Anthropic.as_str(), "anthropic");
+        assert_eq!(ProviderId::Openai.as_str(), "openai");
         assert_eq!(ProviderId::Other.as_str(), "other");
     }
 
@@ -254,8 +273,13 @@ mod tests {
         assert_eq!(s, "\"deepseek\"");
         let back: ProviderId = serde_json::from_str("\"deepseek\"").unwrap();
         assert_eq!(back, ProviderId::Deepseek);
+        // Known strings parse to their variant
+        let openai: ProviderId = serde_json::from_str("\"openai\"").unwrap();
+        assert_eq!(openai, ProviderId::Openai);
+        let anthropic: ProviderId = serde_json::from_str("\"anthropic\"").unwrap();
+        assert_eq!(anthropic, ProviderId::Anthropic);
         // Unknown string parses to Other thanks to #[serde(other)]
-        let other: ProviderId = serde_json::from_str("\"openai\"").unwrap();
+        let other: ProviderId = serde_json::from_str("\"unknown\"").unwrap();
         assert_eq!(other, ProviderId::Other);
     }
 

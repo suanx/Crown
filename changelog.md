@@ -1,13 +1,25 @@
 # Changelog
 
-## v1.3.7
+## v1.3.8
+
+### ✨ 新功能
+- 自定义上下文长度：设置 → 模型供应商 中可配置每个模型的上下文窗口大小，引擎实时生效
+- 自定义工作目录：新建线程时自动使用设置中的工作目录作为默认路径
+- Anthropic / OpenAI 定价表：为 Claude Sonnet/Haiku/Opus、GPT-5.5/o4 等模型提供费用估算
 
 ### 🐛 修复
-- 修复非 DeepSeek 模型（OpenAI 等）不显示思考内容的问题
+- 修复自定义工作目录保存后不生效的问题（new thread + send_message 路径均已覆盖）
+- 修复设置中的上下文长度配置被 `pricing::context_window()` 忽略的问题
+- 修复 `ProviderId` 枚举缺少 Anthropic/OpenAI 变体导致 match 不完整
 
 ### 🔧 变更
-- `turn_chat_opts` 中非 DeepSeek 模型的 `reasoning_effort` 现在无论 effort 级别都透传给 API，而非仅在非默认值时传递
+- `ThreadState` 新增 `context_window_override` 字段，支持线程级上下文窗口自定义
+- `AgentEngine` 新增 `context_window_overrides` 映射表 + `set_context_window_overrides()` 方法
+- `pricing::context_window()` 新增 `custom_override` 参数
+- 前端 `WelcomePage` 创建线程时自动传入工作目录
+- 后端 `send_message` / `create_thread` 命令使用工作目录作为默认 cwd
 
+## v1.3.7
 ## v1.3.6
 ### 🐛 修复
 - 修复 `set_config` 中 `json.remove("workspaceDir")` Rust 编译错误（`serde_json::Value` 无 `.remove()` 方法）

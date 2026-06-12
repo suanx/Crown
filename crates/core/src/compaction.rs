@@ -107,7 +107,7 @@ pub fn decide_after_usage(
     provider: ProviderId,
     already_folded_this_turn: bool,
 ) -> PostUsageDecision {
-    let ctx_max = pricing::context_window(provider, model);
+    let ctx_max = pricing::context_window(provider, model, None);
     let prompt_tokens = usage.prompt_tokens as u64;
     let ratio = prompt_tokens as f64 / ctx_max as f64;
 
@@ -161,9 +161,8 @@ pub fn decide_after_usage(
 pub fn estimate_turn_start(
     messages: &[deepseek_client::types::ChatMessage],
     model: &str,
-    provider: ProviderId,
 ) -> TurnStartEstimate {
-    let ctx_max = pricing::context_window(provider, model);
+    let ctx_max = pricing::context_window(provider, model, None);
 
     // Convert client messages → tokenizer messages so the estimate runs
     // through the real V4 chat template (per-message template overhead +

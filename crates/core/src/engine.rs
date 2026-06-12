@@ -206,6 +206,9 @@ pub struct AgentEngine {
     /// the CrownPaths data root). `None` → `system_prompt_template` is used
     /// verbatim (unchanged behavior for tests / non-Tauri).
     prompt_augment: parking_lot::RwLock<Option<Arc<crate::memory::PromptAugment>>>,
+    /// 用户自定义上下文长度覆盖表。key = 模型ID, value = 自定义窗口大小。
+    /// 通过 Tauri 命令层在配置加载/保存时更新。
+    context_window_overrides: Arc<parking_lot::RwLock<HashMap<String, usize>>>,
 }
 
 /// A batch of tool calls to execute together. Read-only batches run
@@ -232,7 +235,8 @@ fn turn_chat_opts(
                 thinking_type: "enabled".to_string(),
             }),
         }),
-        ProviderId::Other => None,
+        // Anthropic, OpenAI and others: no DeepSeek-specific extra_body.
+        ProviderId::Anthropic | ProviderId::Openai | ProviderId::Other => None,
     };
     let thinking = None;
 
@@ -242,7 +246,7 @@ fn turn_chat_opts(
         // Non-DeepSeek: pass through regardless of effort level so
         // OpenAI-compatible models (o1/o3, etc.) receive reasoning_effort
         // even at the default "medium" setting.
-        (ProviderId::Other, effort) if !effort.is_empty() => Some(effort.to_string()),
+        (ProviderId::Anthropic | ProviderId::Openai | ProviderId::Other, effort) if !effort.is_empty() => Some(effort.to_string()),
         _ => None,
     };
     ChatOpts {
@@ -277,6 +281,7 @@ impl AgentEngine {
             subagent: parking_lot::RwLock::new(None),
             question_gate: parking_lot::RwLock::new(None),
             prompt_augment: parking_lot::RwLock::new(None),
+            context_window_overrides: Arc::new(parking_lot::RwLock::new(HashMap::new())),
         }
     }
 
@@ -298,7 +303,20 @@ impl AgentEngine {
     }
 
     /// 注入运行时供应商客户端解析器。
-    pub fn set_provider_client_resolver(&self, resolver: Arc<dyn ProviderClientResolver>) {
+    pub fn set_provider_client_resolver
+
+    /// 更新用户自定义上下文长度覆盖表。key = 模型 ID，value = 上下文窗口(token)。
+    pub fn set_context_window_overrides(&self, overrides: HashMap<String, usize>) {
+        *self.context_window_overrides.write() = overrides;
+    }
+
+    /// 获取模型的有效上下文长度：优先用用户自定义值，否则从定价表读取。
+    pub fn effective_context_window(&self, provider: ProviderId, model: &str) -> usize {
+        let overrides = self.context_window_overrides.read();
+        let custom = overrides.get(model).copied();
+        drop(overrides);
+        pricing::context_window(provider, model, custom)
+    }(&self, resolver: Arc<dyn ProviderClientResolver>) {
         *self.client_resolver.write() = Some(resolver);
     }
 
@@ -993,7 +1011,7 @@ impl AgentEngine {
                     // already ran or wouldn't help enough. Fold once more as
                     // a last resort, then stop the turn cleanly so we never
                     // send an over-budget request that would 400.
-                    let ctx_max = pricing::context_window(provider, &model);
+                    let ctx_max = self.effective_context_window(provider, &model);
                     let tail_budget =
                         (ctx_max as f64 * compaction::FOLD_AGGRESSIVE_TAIL_FRACTION) as usize;
                     let folded = self
@@ -1272,7 +1290,7 @@ impl AgentEngine {
     ) {
         let model = state.model.read().clone();
         let provider = *state.provider.read();
-        let ctx_max = pricing::context_window(provider, &model);
+        let ctx_max = self.effective_context_window(provider, &model);
         let messages = self.build_messages(state);
         let est = compaction::estimate_turn_start(&messages, &model, provider);
         let used = est.estimate_tokens.min(ctx_max) as u64;
@@ -1363,7 +1381,7 @@ impl AgentEngine {
         });
 
         // Emit context usage (API-precise) for the frontend ring.
-        let ctx_max = pricing::context_window(provider, model);
+        let ctx_max = self.effective_context_window(provider, model);
         let used = final_usage.prompt_tokens as u64;
         let _ = event_tx.send(EngineEvent::ContextUsage {
             thread_id: state.id.clone(),
@@ -1964,7 +1982,7 @@ impl AgentEngine {
             let entries: Vec<crate::skills::SkillListEntry> =
                 metas.iter().map(Into::into).collect();
             let provider = *state.provider.read();
-            let ctx_max = pricing::context_window(provider, &model);
+            let ctx_max = self.effective_context_window(provider, &model);
             let char_budget = (ctx_max as f64 * 4.0 * 0.01) as usize;
             let listing = crate::skills::format_skill_listing(&entries, char_budget);
             if !listing.is_empty() {

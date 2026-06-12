@@ -14,6 +14,7 @@ import { useChatStore } from "@/stores/chatStore";
 import { useSessionStore } from "@/stores/sessionStore";
 import { useRouterStore } from "@/stores/routerStore";
 import { useUiStore } from "@/stores/uiStore";
+import { useSettingsStore } from "@/stores/settingsStore";
 
 const QUICK_ACTIONS = [
   { icon: CodeIcon, label: "读代码", prompt: "帮我读一下当前项目结构" },
@@ -67,11 +68,14 @@ export function WelcomePage() {
 
     try {
       const uiState = useUiStore.getState();
+      const settingsState = useSettingsStore.getState();
+      const workspaceCwd = settingsState.workspaceDir || undefined;
       const [summary] = await Promise.all([
         agentClient.createThread({
           model: uiState.currentModel,
           providerId: uiState.currentProviderId,
           thinkingEffort: uiState.currentThinkingEffort,
+          cwd: workspaceCwd,
         }),
         // 等动画完成 (300ms transition + 50ms 余量)
         new Promise((r) => setTimeout(r, 350)),

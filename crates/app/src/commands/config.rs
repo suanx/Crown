@@ -319,6 +319,31 @@ fn write_config_json(json: &serde_json::Value) -> Result<(), String> {
 }
 
 fn read_stored_providers() -> Vec<StoredProviderConfig> {
+/// 从已存储的供应商配置中提取 模型ID→自定义上下文长度 映射表。
+/// 返回的 HashMap 可用于 `AgentEngine::set_context_window_overrides()`。
+pub fn compute_context_window_overrides
+
+/// 从配置文件中读取已存储的工作目录。
+pub fn read_stored_workspace_dir() -> String {
+    let json = read_config_json();
+    json
+        .get("workspaceDir")
+        .and_then(|v| v.as_str())
+        .filter(|s| !s.is_empty())
+        .map(|s| s.to_string())
+        .unwrap_or_default()
+}() -> std::collections::HashMap<String, usize> {
+    let providers = read_stored_providers();
+    let mut map = std::collections::HashMap::new();
+    for provider in &providers {
+        for model in &provider.models {
+            if model.context_window > 0 {
+                map.insert(model.id.clone(), model.context_window as usize);
+            }
+        }
+    }
+    map
+}
     let json = read_config_json();
     let legacy_key = json
         .get("apiKey")
@@ -617,7 +642,8 @@ fn harden_file_permissions(path: &std::path::Path) {
 }
 
 #[tauri::command]
-pub async fn get_config(_state: tauri::State<'_, AppState>) -> Result<AppConfigDto, String> {
+pub async fn get_config(state: tauri::State<'_, AppState>) -> Result<AppConfigDto, String> {
+    state.engine.set_context_window_overrides(compute_context_window_overrides());
     let json = read_config_json();
     // Environment values remain a fallback/import path, but a packaged demo
     // works from config.json alone after the user fills settings in-app.

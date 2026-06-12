@@ -69,10 +69,14 @@ pub struct ThreadState {
     pub provider: RwLock<ProviderId>,
     /// 供应商原始 ID。`ProviderId::Other` 只能表达“未知供应商”，这里保留
     /// 真实字符串用于运行时解析用户配置。
+    /// 供应商原始 ID。`ProviderId::Other` 只能表达"未知供应商"，这里保留
+    /// 真实字符串用于运行时解析用户配置。
     pub provider_id: RwLock<String>,
     /// Working directory for tool calls (informational; tools resolve paths
     /// independently against process cwd).
     pub cwd: Option<PathBuf>,
+    /// 用户自定义上下文长度覆盖（0 = 使用定价表默认值）。
+    pub context_window_override: RwLock<Option<usize>>,
     /// Immutable system prefix.
     pub prefix: ImmutablePrefix,
     /// Conversation log (append-only).
@@ -106,6 +110,7 @@ impl ThreadState {
         cwd: Option<PathBuf>,
         permission_ctx: ToolPermissionContext,
         system_prompt: String,
+        context_window_override: Option<usize>,
     ) -> Self {
         let now = chrono::Utc::now().timestamp_millis();
         Self {
@@ -115,6 +120,7 @@ impl ThreadState {
             provider: RwLock::new(provider),
             provider_id: RwLock::new(provider_id),
             cwd,
+            context_window_override: RwLock::new(context_window_override),
             prefix: ImmutablePrefix::new(system_prompt),
             log: RwLock::new(AppendOnlyLog::default()),
             permission_ctx: RwLock::new(permission_ctx),
@@ -213,10 +219,10 @@ mod tests {
             "deepseek-v4-flash".into(),
             "medium".into(),
             ProviderId::Deepseek,
-            "deepseek".into(),
             None,
             ToolPermissionContext::default(),
             "system".into(),
+            None,
         ))
     }
 
