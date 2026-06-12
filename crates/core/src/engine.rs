@@ -261,6 +261,7 @@ fn turn_chat_opts(
         reasoning_effort,
         stream_options,
     }
+}
 
 impl AgentEngine {
     /// Construct the engine with all shared dependencies. The cache is
