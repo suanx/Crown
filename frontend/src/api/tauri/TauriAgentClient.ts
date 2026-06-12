@@ -256,10 +256,6 @@ export class TauriAgentClient implements AgentClient {
   ): Promise<string> {
     return invoke<string>("debug_test_provider", { providerId, model, message });
   }
-  debugTestStream(providerId: string, model: string, message: string): Promise<string> {
-    return invoke<string>("debug_test_stream", { providerId, model, message });
-  }
-
 
   listHookEvents(): Promise<HookEventInfo[]> {
     return invoke<HookEventInfo[]>("list_hook_events");

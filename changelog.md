@@ -1,4 +1,11 @@
 # Changelog
+## v1.3.5
+
+### 🧹 清理
+- 移除未使用的 `ProviderPanel.tsx` 死代码（已被 `ModelsPanel.tsx` 取代）
+- 移除前端 `debug_test_stream` 死代码（后端未注册，UI 未调用）
+
+## v1.3.4
 ## v1.3.4
 
 ### 📝 文档
