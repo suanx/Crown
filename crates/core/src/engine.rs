@@ -303,7 +303,9 @@ impl AgentEngine {
     }
 
     /// 注入运行时供应商客户端解析器。
-    pub fn set_provider_client_resolver
+    pub fn set_provider_client_resolver(&self, resolver: Arc<dyn ProviderClientResolver>) {
+        *self.client_resolver.write() = Some(resolver);
+    }
 
     /// 更新用户自定义上下文长度覆盖表。key = 模型 ID，value = 上下文窗口(token)。
     pub fn set_context_window_overrides(&self, overrides: HashMap<String, usize>) {
@@ -316,8 +318,6 @@ impl AgentEngine {
         let custom = overrides.get(model).copied();
         drop(overrides);
         pricing::context_window(provider, model, custom)
-    }(&self, resolver: Arc<dyn ProviderClientResolver>) {
-        *self.client_resolver.write() = Some(resolver);
     }
 
     /// Compose the system prompt for a thread with the given `cwd`. With a

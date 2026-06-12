@@ -285,7 +285,7 @@ mod tests {
 
         // ...but the context window must still be the real (non-zero) value,
         // never the override's placeholder 0.
-        let win = context_window(ProviderId::Deepseek, "deepseek-v4-flash");
+        let win = context_window(ProviderId::Deepseek, "deepseek-v4-flash", None);
         assert!(
             win > 0,
             "context_window must not be zeroed by a pricing override (got {win})"

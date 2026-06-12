@@ -79,7 +79,7 @@ impl ProviderId {
         }
     }
 }
-}
+
 
 /// Generic per-model pricing record. All fields USD per 1M tokens.
 ///
@@ -250,6 +250,7 @@ mod tests {
         assert_eq!(compute_cost(ProviderId::Other, "anything", u), 0.0);
     }
 
+    #[test]
     fn provider_id_round_trip_lossy() {
         assert_eq!(ProviderId::from_str_lossy("deepseek"), ProviderId::Deepseek);
         assert_eq!(ProviderId::from_str_lossy("DeepSeek"), ProviderId::Deepseek);
