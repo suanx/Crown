@@ -1,15 +1,8 @@
 //! send_message + abort_turn commands.
 
-use base64::Engine;
-
-use tokio::sync::mpsc;
-
-use deepseek_core::engine::EngineEvent;
 use deepseek_core::pricing::ProviderId;
-use deepseek_core::thread::ThreadId;
-use deepseek_state::{ThreadInsert, ThreadRepo};
+use deepseek_state::ThreadRepo;
 
-use crate::dto::SendMessageInput;
 use crate::events::dispatch_engine_event;
 use crate::AppState;
 
@@ -22,16 +15,16 @@ use crate::AppState;
 pub async fn send_message(
     app: tauri::AppHandle,
     state: tauri::State<'_, AppState>,
-    input: SendMessageInput,
+    input: crate::dto::SendMessageInput,
 ) -> Result<(), String> {
     let engine = state.engine.clone();
 
-    let resolved_id: ThreadId = if input.thread_id.is_empty() {
+    let resolved_id: String = if input.thread_id.is_empty() {
         let provider_id = crate::commands::config::read_default_provider_id_pub();
         let model = crate::commands::config::read_default_model_pub();
         let workspace_dir = crate::commands::config::read_stored_workspace_dir();
-        let repo = ThreadRepo::new(state.db.as_ref());
-        repo.create(ThreadInsert {
+        let repo = deepseek_state::ThreadRepo::new(state.db.as_ref());
+        repo.create(deepseek_state::ThreadInsert {
             name: None,
             model,
             cwd: Some(workspace_dir).filter(|s| !s.is_empty()),
@@ -44,13 +37,12 @@ pub async fn send_message(
         .map_err(|e| format!("create_thread: {e}"))?
         .id
     } else {
-    } else {
         input.thread_id
     };
 
     sync_thread_runtime_from_db(&state, &resolved_id)?;
 
-    let (event_tx, mut event_rx) = mpsc::unbounded_channel::<EngineEvent>();
+    let (event_tx, mut event_rx) = tokio::sync::mpsc::unbounded_channel::<deepseek_core::engine::EngineEvent>();
 
     let app_clone = app.clone();
     let forward = tokio::spawn(async move {
