@@ -163,8 +163,9 @@ impl DeepSeekClient {
             max_tokens: None,
             reasoning_effort: opts.reasoning_effort,
             stream: Some(true),
-            stream_options: None, // Don't request usage in stream for broad compatibility
-            thinking: opts.thinking,
+            stream_options: Some(StreamOptions {
+                include_usage: true,
+            }),
             extra_body: opts.extra_body,
         };
 
