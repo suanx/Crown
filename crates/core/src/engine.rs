@@ -239,8 +239,10 @@ fn turn_chat_opts(
     let reasoning_effort = match (provider, thinking_effort) {
         (ProviderId::Deepseek, "ultra") => Some("max".to_string()),
         (ProviderId::Deepseek, _) => Some("high".to_string()),
-        // Non-DeepSeek: pass through if user set a non-default effort
-        (ProviderId::Other, effort) if effort != "medium" && !effort.is_empty() => Some(effort.to_string()),
+        // Non-DeepSeek: pass through regardless of effort level so
+        // OpenAI-compatible models (o1/o3, etc.) receive reasoning_effort
+        // even at the default "medium" setting.
+        (ProviderId::Other, effort) if !effort.is_empty() => Some(effort.to_string()),
         _ => None,
     };
     ChatOpts {

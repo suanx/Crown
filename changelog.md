@@ -1,7 +1,14 @@
 # Changelog
 
-## v1.3.6
+## v1.3.7
 
+### 🐛 修复
+- 修复非 DeepSeek 模型（OpenAI 等）不显示思考内容的问题
+
+### 🔧 变更
+- `turn_chat_opts` 中非 DeepSeek 模型的 `reasoning_effort` 现在无论 effort 级别都透传给 API，而非仅在非默认值时传递
+
+## v1.3.6
 ### 🐛 修复
 - 修复 `set_config` 中 `json.remove("workspaceDir")` Rust 编译错误（`serde_json::Value` 无 `.remove()` 方法）
 - 修复 `template.rs` 中 irrefutable `if let` 编译器警告
