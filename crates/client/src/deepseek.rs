@@ -2,7 +2,7 @@ use std::pin::Pin;
 use std::time::Duration;
 
 use anyhow::{anyhow, Result};
-use futures::stream::Stream;
+use futures::stream::{self, Stream};
 use reqwest::Client;
 use serde::Deserialize;
 
@@ -174,6 +174,11 @@ impl DeepSeekClient {
     }
 
     /// Issue the streaming HTTP call for a fully-formed [`ChatRequest`].
+    ///
+    /// Handles both SSE (`text/event-stream`) and non-SSE (JSON) responses.
+    /// Some providers (e.g. iFlytek) return a plain JSON response even when
+    /// `stream: true` is set — we parse it as a single chunk to avoid silent
+    /// empty responses.
     async fn stream_inner(
         &self,
         request_body: ChatRequest,
@@ -195,6 +200,29 @@ impl DeepSeekClient {
             &self.retry,
         )
         .await?;
+
+        // Check if the response is JSON (not SSE) — some providers return a
+        // regular JSON response even when stream:true is set.
+        let content_type = response
+            .headers()
+            .get(reqwest::header::CONTENT_TYPE)
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("");
+
+        if content_type.contains("application/json") {
+            let body = response.text().await.map_err(|e| anyhow!("Failed to read response body: {e}"))?;
+            let parsed = parse_chat_response(&body)?;
+            let chunk = StreamChunk {
+                content_delta: Some(parsed.content),
+                reasoning_delta: parsed.reasoning_content,
+                tool_call_delta: None,
+                usage: Some(parsed.usage),
+                finish_reason: Some("stop".to_string()),
+            };
+            let stream: Pin<Box<dyn Stream<Item = Result<StreamChunk>> + Send>> =
+                Box::pin(futures::stream::once(async move { Ok(chunk) }));
+            return Ok(stream);
+        }
 
         Ok(parse_sse_stream(response))
     }

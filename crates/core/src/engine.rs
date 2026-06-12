@@ -243,10 +243,11 @@ fn turn_chat_opts(
     let reasoning_effort = match (provider, thinking_effort) {
         (ProviderId::Deepseek, "ultra") => Some("max".to_string()),
         (ProviderId::Deepseek, _) => Some("high".to_string()),
-        // Non-DeepSeek: pass through regardless of effort level so
-        // OpenAI-compatible models (o1/o3, etc.) receive reasoning_effort
-        // even at the default "medium" setting.
-        (ProviderId::Anthropic | ProviderId::Openai | ProviderId::Other, effort) if !effort.is_empty() => Some(effort.to_string()),
+        // OpenAI/Anthropic: pass through effort for o-series/Claude reasoning
+        (ProviderId::Anthropic | ProviderId::Openai, effort) if !effort.is_empty() => Some(effort.to_string()),
+        // Other (e.g. iFlytek): don't send reasoning_effort since many
+        // providers don't support it and may reject the request.
+        (ProviderId::Other, _) => None,
         _ => None,
     };
     ChatOpts {
