@@ -1,11 +1,11 @@
 //! send_message + abort_turn commands.
 
+use base64::Engine;
 use deepseek_core::pricing::ProviderId;
 use deepseek_state::ThreadRepo;
 
 use crate::events::dispatch_engine_event;
 use crate::AppState;
-
 /// Run a turn for `input.threadId`, streaming results back as Tauri events.
 ///
 /// If `input.threadId` is empty, a fresh thread is created and the first

@@ -318,9 +318,7 @@ fn write_config_json(json: &serde_json::Value) -> Result<(), String> {
     Ok(())
 }
 
-fn read_stored_providers() -> Vec<StoredProviderConfig> {
 /// 从已存储的供应商配置中提取 模型ID→自定义上下文长度 映射表。
-/// 返回的 HashMap 可用于 `AgentEngine::set_context_window_overrides()`。
 pub fn compute_context_window_overrides() -> std::collections::HashMap<String, usize> {
     let providers = read_stored_providers();
     let mut map = std::collections::HashMap::new();
@@ -345,6 +343,7 @@ pub fn read_stored_workspace_dir() -> String {
         .unwrap_or_default()
 }
 
+fn read_stored_providers() -> Vec<StoredProviderConfig> {
     let json = read_config_json();
     let legacy_key = json
         .get("apiKey")
