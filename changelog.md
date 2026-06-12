@@ -1,8 +1,18 @@
 # Changelog
 
-## v1.3.10
+## v1.3.11
 
 ### 🐛 修复
+- 修复讯飞星辰 MaaS 发消息无回复：`stream_options` 仅对 DeepSeek 发送，其他供应商省略
+- 修复除 deepseek-v4-flash 外其他模型不显示思考文字：非 DeepSeek 供应商也传递 `reasoning_effort`
+- SSE 解析新增 JSON fallback：`parse_sse_body()` 在零 chunk 时自动解析 JSON 响应
+
+### 🔧 变更
+- `ChatOpts` 新增 `stream_options` 字段，按供应商按需传递
+- `stream_inner()` 改为读取完整响应字节后解析，支持 SSE 和 JSON 两种格式
+- 新增 `parse_sse_body()` 和 `try_parse_as_json_fallback()` 函数
+
+## v1.3.10
 - 修复 `stream_with_opts()` 缺失 `thinking` 字段导致编译错误
 - 移除未使用的 `futures::stream::self` 导入警告
 

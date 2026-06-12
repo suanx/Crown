@@ -400,6 +400,7 @@ pub fn fold_summary_opts(
         extra_body,
         thinking: None,
         reasoning_effort: None,
+        stream_options: None,
     }
 }
 

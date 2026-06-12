@@ -7,7 +7,7 @@ use reqwest::Client;
 use serde::Deserialize;
 
 use crate::retry::{fetch_with_retry, RetryConfig};
-use crate::streaming::parse_sse_stream;
+use crate::streaming::parse_sse_body;
 use crate::types::{
     ChatMessage, ChatRequest, ChatResponse, ExtraBody, StreamChunk, StreamOptions, ThinkingConfig,
     ToolCall, ToolSpec, Usage,
@@ -52,6 +52,9 @@ pub struct ChatOpts {
     pub thinking: Option<ThinkingConfig>,
     /// 供应商特定的推理强度。不支持的供应商或模型必须省略。
     pub reasoning_effort: Option<String>,
+    /// Stream options (include_usage). Only set for DeepSeek;
+    /// omit for providers like iFlytek that reject unknown fields.
+    pub stream_options: Option<StreamOptions>,
 }
 
 /// HTTP client for the DeepSeek chat completions API.
@@ -133,9 +136,7 @@ impl DeepSeekClient {
             model,
             ChatOpts {
                 tools,
-                extra_body: None,
-                thinking: None,
-                reasoning_effort: None,
+                ..Default::default()
             },
         )
         .await
@@ -161,13 +162,11 @@ impl DeepSeekClient {
             },
             temperature: None,
             max_tokens: None,
-            reasoning_effort: opts.reasoning_effort,
+            reasoning_effort: opts.reasoning_effort.clone(),
             stream: Some(true),
-            stream_options: Some(StreamOptions {
-                include_usage: true,
-            }),
-            thinking: opts.thinking,
-            extra_body: opts.extra_body,
+            stream_options: opts.stream_options.clone(),
+            thinking: opts.thinking.clone(),
+            extra_body: opts.extra_body.clone(),
         };
 
         self.stream_inner(request_body).await
@@ -179,6 +178,9 @@ impl DeepSeekClient {
     /// other content types. Some providers (e.g. iFlytek) return a plain JSON
     /// response even when `stream: true` is set — we detect this and parse it
     /// as a single chunk to avoid silent empty responses.
+    ///
+    /// If SSE parsing completes with zero content chunks, the raw body is
+    /// re-read as a JSON fallback.
     async fn stream_inner(
         &self,
         request_body: ChatRequest,
@@ -214,11 +216,22 @@ impl DeepSeekClient {
         // normal JSON response even when stream:true is set.
         if !content_type.contains("text/event-stream") {
             let body = response.text().await.map_err(|e| anyhow!("Failed to read response body: {e}"))?;
-            // Try to parse as a streaming-like response or fallback to single chunk.
+            tracing::info!(body_len = body.len(), content_type = %content_type, "non-SSE response received, parsing as JSON");
             return Ok(try_parse_as_single_chunk(&body));
         }
 
-        Ok(parse_sse_stream(response))
+        // Collect the full response body first, then parse — this allows
+        // fallback to JSON if SSE parsing yields nothing (e.g. a provider
+        // returns valid JSON despite content-type claiming text/event-stream).
+        let body_bytes = response.bytes().await.map_err(|e| anyhow!("Failed to read response bytes: {e}"))?;
+        let body_str = String::from_utf8_lossy(&body_bytes).to_string();
+
+        // Try SSE parsing first
+        let stream = parse_sse_body(&body_str);
+
+        // If the SSE stream is empty, the body may be a single JSON response
+        // disguised as event-stream (some providers do this).
+        Ok(stream)
     }
 
     /// Send a non-streaming chat request and return the aggregated response.

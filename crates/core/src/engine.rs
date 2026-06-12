@@ -239,24 +239,28 @@ fn turn_chat_opts(
         ProviderId::Anthropic | ProviderId::Openai | ProviderId::Other => None,
     };
     let thinking = None;
-
     let reasoning_effort = match (provider, thinking_effort) {
         (ProviderId::Deepseek, "ultra") => Some("max".to_string()),
         (ProviderId::Deepseek, _) => Some("high".to_string()),
-        // OpenAI/Anthropic: pass through effort for o-series/Claude reasoning
-        (ProviderId::Anthropic | ProviderId::Openai, effort) if !effort.is_empty() => Some(effort.to_string()),
-        // Other (e.g. iFlytek): don't send reasoning_effort since many
-        // providers don't support it and may reject the request.
-        (ProviderId::Other, _) => None,
+        // Non-DeepSeek: pass through effort for reasoning-capable models.
+        (ProviderId::Anthropic | ProviderId::Openai | ProviderId::Other, effort)
+            if !effort.is_empty() => Some(effort.to_string()),
         _ => None,
     };
+
+    // stream_options: only DeepSeek supports this field; omit for others.
+    let stream_options = match provider {
+        ProviderId::Deepseek => Some(StreamOptions { include_usage: true }),
+        _ => None,
+    };
+
     ChatOpts {
         tools,
         extra_body,
         thinking,
         reasoning_effort,
+        stream_options,
     }
-}
 
 impl AgentEngine {
     /// Construct the engine with all shared dependencies. The cache is

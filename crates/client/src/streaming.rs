@@ -142,6 +142,115 @@ pub fn parse_sse_stream(
         }
     })
 }
+    })
+}
+
+/// Parse SSE lines from a complete response body string.
+///
+/// Used when the full body is already loaded (e.g. from `response.bytes()`).
+/// If no SSE chunks are found, falls back to parsing the body as a single
+/// JSON response (some providers return JSON despite `text/event-stream`).
+pub fn parse_sse_body(body: &str) -> Pin<Box<dyn Stream<Item = Result<StreamChunk>> + Send>> {
+    let mut chunks = Vec::new();
+    for line in body.lines() {
+        let line = line.trim().to_string();
+        if line.is_empty() {
+            continue;
+        }
+        let raw_line = line.strip_prefix("data:").unwrap_or("").trim();
+        if raw_line.is_empty() || raw_line == "[DONE]" {
+            if raw_line == "[DONE]" {
+                break;
+            }
+            continue;
+        }
+        match parse_sse_event(raw_line) {
+            SseEvent::Chunk(chunk) => chunks.push(*chunk),
+            SseEvent::Done => break,
+            SseEvent::Malformed => {
+                warn!(payload = %truncate_for_log(raw_line), "skipping malformed SSE frame in body parse");
+                continue;
+            }
+        }
+    }
+
+    // If SSE parsing yielded nothing, the body may be a raw JSON response.
+    if chunks.is_empty() {
+        warn!(body_len = body.len(), "SSE parse yielded zero chunks, falling back to JSON parse");
+        return try_parse_as_json_fallback(body);
+    }
+
+    Box::pin(futures::stream::iter(chunks.into_iter().map(Ok)))
+}
+
+/// Fallback: parse a response body as a single JSON chat completion response
+/// and yield it as a single `StreamChunk`.
+fn try_parse_as_json_fallback(body: &str) -> Pin<Box<dyn Stream<Item = Result<StreamChunk>> + Send>> {
+    #[derive(Deserialize)]
+    struct JsonChoice {
+        message: JsonMessage,
+        #[serde(default)]
+        finish_reason: Option<String>,
+    }
+    #[derive(Deserialize)]
+    struct JsonMessage {
+        #[serde(default)]
+        content: Option<String>,
+        #[serde(default)]
+        reasoning_content: Option<String>,
+    }
+    #[derive(Deserialize)]
+    struct JsonUsage {
+        #[serde(default)]
+        prompt_tokens: u32,
+        #[serde(default)]
+        completion_tokens: u32,
+        #[serde(default)]
+        total_tokens: u32,
+    }
+    #[derive(Deserialize)]
+    struct JsonResponse {
+        #[serde(default)]
+        choices: Vec<JsonChoice>,
+        #[serde(default)]
+        usage: Option<JsonUsage>,
+    }
+
+    let chunk = match serde_json::from_str::<JsonResponse>(body) {
+        Ok(resp) => {
+            let choice = resp.choices.into_iter().next();
+            let content = choice.as_ref().and_then(|c| c.message.content.clone()).unwrap_or_default();
+            let reasoning = choice.as_ref().and_then(|c| c.message.reasoning_content.clone());
+            let usage = resp.usage.map(|u| crate::types::Usage {
+                prompt_tokens: u.prompt_tokens,
+                completion_tokens: u.completion_tokens,
+                total_tokens: u.total_tokens,
+                prompt_cache_hit_tokens: 0,
+                prompt_cache_miss_tokens: 0,
+            });
+            StreamChunk {
+                content_delta: Some(content),
+                reasoning_delta: reasoning,
+                tool_call_delta: None,
+                usage,
+                finish_reason: choice.and_then(|c| c.finish_reason),
+            }
+        }
+        Err(e) => {
+            warn!(error = %e, body_preview = %body.chars().take(200).collect::<String>(), "JSON fallback parse failed, returning raw body");
+            StreamChunk {
+                content_delta: Some(body.to_string()),
+                reasoning_delta: None,
+                tool_call_delta: None,
+                usage: None,
+                finish_reason: Some("stop".to_string()),
+            }
+        }
+    };
+    Box::pin(futures::stream::once(async move { Ok(chunk) }))
+}
+
+/// Truncate a payload for safe logging (avoid dumping huge frames).
 
 /// Truncate a payload for safe logging (avoid dumping huge frames).
 fn truncate_for_log(s: &str) -> String {
