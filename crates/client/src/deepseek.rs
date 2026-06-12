@@ -163,9 +163,7 @@ impl DeepSeekClient {
             max_tokens: None,
             reasoning_effort: opts.reasoning_effort,
             stream: Some(true),
-            stream_options: Some(StreamOptions {
-                include_usage: true,
-            }),
+            stream_options: None, // Don't request usage in stream for broad compatibility
             thinking: opts.thinking,
             extra_body: opts.extra_body,
         };
@@ -175,10 +173,10 @@ impl DeepSeekClient {
 
     /// Issue the streaming HTTP call for a fully-formed [`ChatRequest`].
     ///
-    /// Handles both SSE (`text/event-stream`) and non-SSE (JSON) responses.
-    /// Some providers (e.g. iFlytek) return a plain JSON response even when
-    /// `stream: true` is set — we parse it as a single chunk to avoid silent
-    /// empty responses.
+    /// Handles both SSE (`text/event-stream`), non-SSE (JSON) responses, and
+    /// other content types. Some providers (e.g. iFlytek) return a plain JSON
+    /// response even when `stream: true` is set — we detect this and parse it
+    /// as a single chunk to avoid silent empty responses.
     async fn stream_inner(
         &self,
         request_body: ChatRequest,
@@ -201,28 +199,25 @@ impl DeepSeekClient {
         )
         .await?;
 
-        // Check if the response is JSON (not SSE) — some providers return a
-        // regular JSON response even when stream:true is set.
+        // Check response content-type to determine how to parse.
         let content_type = response
             .headers()
             .get(reqwest::header::CONTENT_TYPE)
             .and_then(|v| v.to_str().ok())
-            .unwrap_or("");
+            .unwrap_or("")
+            .to_lowercase();
 
-        if content_type.contains("application/json") {
+        // If the response is NOT text/event-stream (SSE), treat it as a
+        // regular JSON response. Some providers (iFlytek, etc.) return a
+        // normal JSON response even when stream:true is set.
+        if !content_type.contains("text/event-stream") {
             let body = response.text().await.map_err(|e| anyhow!("Failed to read response body: {e}"))?;
-            let parsed = parse_chat_response(&body)?;
-            let chunk = StreamChunk {
-                content_delta: Some(parsed.content),
-                reasoning_delta: parsed.reasoning_content,
-                tool_call_delta: None,
-                usage: Some(parsed.usage),
-                finish_reason: Some("stop".to_string()),
-            };
-            let stream: Pin<Box<dyn Stream<Item = Result<StreamChunk>> + Send>> =
-                Box::pin(futures::stream::once(async move { Ok(chunk) }));
-            return Ok(stream);
+            // Try to parse as a streaming-like response or fallback to single chunk.
+            return Ok(try_parse_as_single_chunk(&body));
         }
+
+        Ok(parse_sse_stream(response))
+    }
 
         Ok(parse_sse_stream(response))
     }
@@ -340,6 +335,8 @@ struct RawChatResponse {
 #[derive(Debug, Deserialize)]
 struct RawChoice {
     message: RawMessage,
+    #[serde(default)]
+    finish_reason: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -375,6 +372,45 @@ struct RawUsage {
 }
 
 /// Parse the JSON response body from a non-streaming chat completions call.
+/// Try to parse a response body as a single streaming chunk.
+///
+/// This handles providers that return a plain JSON response even when
+/// `stream: true` is set in the request. The response is parsed as a
+/// non-streaming [`ChatResponse`] and wrapped into a single-element stream.
+fn try_parse_as_single_chunk(body: &str) -> Pin<Box<dyn Stream<Item = Result<StreamChunk>> + Send>> {
+    let chunk = match serde_json::from_str::<RawChatResponse>(body) {
+        Ok(raw) => {
+            let choice = raw.choices.into_iter().next();
+            let content = choice.as_ref().and_then(|c| c.message.content.clone()).unwrap_or_default();
+            let reasoning = choice.as_ref().and_then(|c| c.message.reasoning_content.clone());
+            let usage = raw.usage.map(|u| Usage {
+                prompt_tokens: u.prompt_tokens,
+                completion_tokens: u.completion_tokens,
+                total_tokens: u.total_tokens,
+                prompt_cache_hit_tokens: u.prompt_cache_hit_tokens,
+                prompt_cache_miss_tokens: u.prompt_cache_miss_tokens,
+            });
+            StreamChunk {
+                content_delta: Some(content),
+                reasoning_delta: reasoning,
+                tool_call_delta: None,
+                usage,
+                finish_reason: choice.map(|c| c.finish_reason.unwrap_or_else(|| "stop".to_string())),
+            }
+        }
+        Err(_) => {
+            // Not parseable as JSON either — return a chunk with the raw body.
+            StreamChunk {
+                content_delta: Some(body.to_string()),
+                reasoning_delta: None,
+                tool_call_delta: None,
+                usage: None,
+                finish_reason: Some("stop".to_string()),
+            }
+        }
+    };
+    Box::pin(futures::stream::once(async move { Ok(chunk) }))
+}
 fn parse_chat_response(body: &str) -> Result<ChatResponse> {
     let raw: RawChatResponse =
         serde_json::from_str(body).map_err(|e| anyhow!("Failed to parse response: {e}"))?;
