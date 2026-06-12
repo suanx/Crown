@@ -1,7 +1,19 @@
 # Changelog
 
-## v1.3.8
+## v1.3.9
 
+### 🐛 修复
+- 修复 iFlytek（讯飞）等接口发消息无回复的问题
+  - `reasoning_effort` 不再发送给不支持该参数的供应商
+  - 流式请求支持非 SSE 的 JSON 回落（`try_parse_as_single_chunk`）
+  - 修复 `stream_options` 兼容性导致的空响应
+
+### 🔧 变更
+- `turn_chat_opts()` 中 `ProviderId::Other` 不再发送 `reasoning_effort`
+- `stream_inner()` 新增 Content-Type 检测：`application/json` 走 JSON 回落解析
+- 新增 `try_parse_as_single_chunk()` 函数
+
+## v1.3.8
 ### ✨ 新功能
 - 自定义上下文长度：设置 → 模型供应商 中可配置每个模型的上下文窗口大小，引擎实时生效
 - 自定义工作目录：新建线程时自动使用设置中的工作目录作为默认路径

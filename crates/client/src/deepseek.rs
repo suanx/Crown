@@ -220,9 +220,6 @@ impl DeepSeekClient {
         Ok(parse_sse_stream(response))
     }
 
-        Ok(parse_sse_stream(response))
-    }
-
     /// Send a non-streaming chat request and return the aggregated response.
     ///
     /// Convenience wrapper over [`Self::chat_with_opts`] with no tools and
