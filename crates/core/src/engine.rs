@@ -43,7 +43,7 @@ use ulid::Ulid;
 
 use deepseek_client::deepseek::{ChatOpts, DeepSeekClient};
 use deepseek_client::types::{
-    ChatMessage, ExtraBody, FunctionCall, MessageContent, ThinkingConfig, ToolCall as ApiToolCall, Usage,
+    ChatMessage, ExtraBody, FunctionCall, MessageContent, StreamOptions, ThinkingConfig, ToolCall as ApiToolCall, Usage,
 };
 use deepseek_state::{
     Database, MessageRepo, ThreadInsert, ThreadRepo, ThreadUpdate, UsageInsert, UsageRepo,
