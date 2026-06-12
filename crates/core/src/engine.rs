@@ -226,7 +226,7 @@ pub trait ProviderClientResolver: Send + Sync {
 fn turn_chat_opts(
     tools: Vec<deepseek_client::types::ToolSpec>,
     provider: ProviderId,
-    _provider_id: &str,
+    provider_id: &str,
     thinking_effort: &str,
 ) -> ChatOpts {
     let extra_body = match provider {
@@ -242,9 +242,11 @@ fn turn_chat_opts(
     let reasoning_effort = match (provider, thinking_effort) {
         (ProviderId::Deepseek, "ultra") => Some("max".to_string()),
         (ProviderId::Deepseek, _) => Some("high".to_string()),
-        // Non-DeepSeek: pass through effort for reasoning-capable models.
-        (ProviderId::Anthropic | ProviderId::Openai | ProviderId::Other, effort)
-            if !effort.is_empty() => Some(effort.to_string()),
+        // Anthropic/OpenAI: set reasoning_effort for reasoning-capable models.
+        (ProviderId::Anthropic | ProviderId::Openai, effort) if !effort.is_empty() => Some(effort.to_string()),
+        // Other: only send reasoning_effort if provider_id suggests support
+        // (e.g. OpenAI-compatible proxies). Skip for known incompatible ones.
+        (ProviderId::Other, effort) if !effort.is_empty() && supports_reasoning_effort(provider_id) => Some(effort.to_string()),
         _ => None,
     };
 
@@ -261,6 +263,14 @@ fn turn_chat_opts(
         reasoning_effort,
         stream_options,
     }
+}
+
+/// Returns true if the given provider_id is known to support `reasoning_effort`.
+fn supports_reasoning_effort(provider_id: &str) -> bool {
+    let lower = provider_id.to_ascii_lowercase();
+    // Known to NOT support reasoning_effort: iFlytek.
+    // Everything else is assumed compatible (OpenAI-compatible proxies).
+    !lower.contains("xfyun")
 }
 
 impl AgentEngine {
