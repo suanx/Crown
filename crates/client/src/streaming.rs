@@ -142,9 +142,6 @@ pub fn parse_sse_stream(
         }
     })
 }
-    })
-}
-
 /// Parse SSE lines from a complete response body string.
 ///
 /// Used when the full body is already loaded (e.g. from `response.bytes()`).
