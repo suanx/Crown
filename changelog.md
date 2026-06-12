@@ -1,7 +1,12 @@
 # Changelog
 
-## v1.3.9
+## v1.3.10
 
+### 🐛 修复
+- 修复 `stream_with_opts()` 缺失 `thinking` 字段导致编译错误
+- 移除未使用的 `futures::stream::self` 导入警告
+
+## v1.3.9
 ### 🐛 修复
 - 修复 iFlytek（讯飞）等接口发消息无回复的问题
   - `reasoning_effort` 不再发送给不支持该参数的供应商

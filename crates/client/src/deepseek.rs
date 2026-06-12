@@ -2,7 +2,7 @@ use std::pin::Pin;
 use std::time::Duration;
 
 use anyhow::{anyhow, Result};
-use futures::stream::{self, Stream};
+use futures::Stream;
 use reqwest::Client;
 use serde::Deserialize;
 
@@ -166,6 +166,7 @@ impl DeepSeekClient {
             stream_options: Some(StreamOptions {
                 include_usage: true,
             }),
+            thinking: opts.thinking,
             extra_body: opts.extra_body,
         };
 
