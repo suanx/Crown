@@ -161,6 +161,8 @@ pub fn decide_after_usage(
 pub fn estimate_turn_start(
     messages: &[deepseek_client::types::ChatMessage],
     model: &str,
+    // Provider-neutral: uses this to look up the correct context window size.
+    provider: ProviderId,
 ) -> TurnStartEstimate {
     let ctx_max = pricing::context_window(provider, model, None);
 

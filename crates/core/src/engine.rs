@@ -376,6 +376,7 @@ impl AgentEngine {
             thread.cwd.as_deref().map(PathBuf::from),
             ToolPermissionContext::new(PermissionMode::from_str_lossy(&thread.permission_mode)),
             self.compose_thread_prompt(thread.cwd.as_deref().map(std::path::Path::new)),
+            None, // context_window_override — loaded per-model at runtime
         ));
 
         // Replay persisted messages into the in-memory log.
@@ -427,6 +428,7 @@ impl AgentEngine {
             cwd.clone(),
             ToolPermissionContext::default(),
             self.compose_thread_prompt(cwd.as_deref()),
+            None, // context_window_override — engine-level HashMap handles this
         ));
         self.cache.put(Arc::clone(&state));
         Ok(state)
