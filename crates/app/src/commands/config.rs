@@ -759,6 +759,13 @@ pub async fn set_config(
     if let Some(subagent) = patch.subagent {
         json["subagent"] = serde_json::to_value(subagent).map_err(|e| e.to_string())?;
     }
+    if let Some(dir) = patch.workspace_dir {
+        if dir.is_empty() {
+            json.remove("workspaceDir");
+        } else {
+            json["workspaceDir"] = serde_json::Value::String(dir);
+        }
+    }
 
     write_config_json(&json)?;
     get_config(state).await
